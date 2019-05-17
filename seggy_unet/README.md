@@ -23,14 +23,16 @@ The architecture was inspired by [U-Net: Convolutional Networks for Biomedical I
 
 
 1. first load env on leonhard
-
-
+    
+    
     module load gcc/4.8.5 python_gpu/3.6.4 hdf5 eth_proxy
+    
     module load cudnn/7.0
+
 2.. then run (currently really fast, so 4 hours is easily enough)
 
-
     bsub -n 4 -W 4:00 -R "rusage[mem=2048, ngpus_excl_p=1]" python main_cil.py
+
 check progress with (note, after each epoch, also calculates valid-loss)
 
     bpeek -f
