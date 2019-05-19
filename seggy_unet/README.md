@@ -29,9 +29,12 @@ The architecture was inspired by [U-Net: Convolutional Networks for Biomedical I
     
     module load cudnn/7.0
 
-2.. then run (currently really fast, so 4 hours is easily enough)
+2.. then run (currently really fast, ca. 1min/epoch, so 4 hours is easily enough)
 
-    bsub -n 4 -W 4:00 -R "rusage[mem=2048, ngpus_excl_p=1]" python main_cil.py
+    bsub -n 4 -W 4:00 -R "rusage[mem=2048, ngpus_excl_p=1]" python main_cil.py --desc "my_test_model" \
+                     --epochs 10 --submission False --rotation 45 --width_shift_range 0.1 --height_shift_range 0.1 \
+                     --shear_range 0.1 --zoom_range 0.1 --horizontal_flip True --fill_mode "nearest"
+    
 
 check progress with (note, after each epoch, also calculates valid-loss)
 
