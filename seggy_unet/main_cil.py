@@ -94,6 +94,8 @@ model.load_weights("./unet_roadseg.hdf5")
 results = model.predict_generator(testGene,count,verbose=1)
 post_results = np.where(results > 0.5, 1, 0)
 
+output_path=os.path.join(output_path,args.desc)
+os.mkdir(output_path)
 if(not submission_flag):
     saveResult(output_path, post_results, filenames)
     saveResult(temp_path, results, filenames)
