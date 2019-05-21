@@ -88,6 +88,10 @@ def labelVisualize(num_class,color_dict,img):
         img_out[img == i,:] = color_dict[i]
     return img_out / 255
 
+def saveResultunprocessed(save_path,npyfile, filenames):
+    for i,item in enumerate(npyfile):
+        img = item[:,:,0]
+        io.imsave(os.path.join(save_path, filenames[i]), img)
 
 def saveResult(save_path,npyfile, filenames):
     for i,item in enumerate(npyfile):

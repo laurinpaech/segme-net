@@ -96,9 +96,13 @@ post_results = np.where(results > 0.5, 1, 0)
 
 output_path=os.path.join(output_path,args.desc)
 os.mkdir(output_path)
+
+output_path_pre=os.path.join(output_path,"pre_results")
+os.mkdir(output_path_pre)
+
 if(not submission_flag):
     saveResult(output_path, post_results, filenames)
-    saveResult(temp_path, results, filenames)
+    saveResultunprocessed(output_path_pre, results, filenames)
 else:
     savesubmitResult(temp_path, output_path, post_results, filenames)
-    saveResult(temp_path, results, filenames)
+    saveResultunprocessed(output_path_pre, results, filenames)
