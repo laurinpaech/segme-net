@@ -28,6 +28,11 @@ parser.add_argument('--horizontal_flip', type=bool,
 parser.add_argument('--fill_mode', type=str,
                     help='points outside the boundaries of the input are filled according to the given mode, '
                          'standard is nearest')
+parser.add_argument('--resize', type=bool,
+                    help='either resizes submission images or uses splits image into 4 subimages to make predictions' )
+parser.add_argument('--combine_max', type=bool,
+                    help='if split image into 4 subimage, can combine using max (True), or using average (False, default)' )
+
 
 args = parser.parse_args()
 # end of argument handling
@@ -51,6 +56,7 @@ if not submission_flag:
     train_path = "data/roadseg/train"
     valid_path = "data/roadseg/valid"
     predict_path = "data/roadseg/valid/image"
+    predict_4to1_path = ""
     output_path = "data/roadseg/valid/output"
     temp_path = "data/roadseg/temp"
     count=10
@@ -58,6 +64,7 @@ else:
     train_path = "data/roadseg/submit_train"
     valid_path = "data/roadseg/valid"
     predict_path = "data/roadseg/submit_test"
+    predict_4to1_path = "data/roadseg/temp_4to1_folder"
     output_path = "data/roadseg/submit_output"
     temp_path = "data/roadseg/temp"
     count=94
@@ -77,8 +84,8 @@ if(not submission_flag):
     validGen = trainGenerator(2,valid_path,'image', 'label',data_gen_args,save_to_dir = None)
 
 model = unet()
-model_checkpoint_train = ModelCheckpoint('unet_roadseg.hdf5', monitor='val_acc',verbose=1, save_best_only=True)
-model_checkpoint_submit = ModelCheckpoint('unet_roadseg.hdf5', monitor='acc',verbose=1, save_best_only=True)
+model_checkpoint_train = ModelCheckpoint(os.path.join(log_path,'unet_roadseg.hdf5'), monitor='val_acc',verbose=1, save_best_only=True)
+model_checkpoint_submit = ModelCheckpoint(os.path.join(log_path,'unet_roadseg.hdf5'), monitor='acc',verbose=1, save_best_only=True)
 
 
 if(not submission_flag):
@@ -87,15 +94,29 @@ if(not submission_flag):
 else:
     model.fit_generator(trainGen, steps_per_epoch=100, epochs=nr_of_epochs, callbacks=[model_checkpoint_submit, tensorboard])
 
-filenames = os.listdir(predict_path)
-testGene = testGenerator(predict_path)
+# choose prediction type (either resize or 4to1), for valid resize is just normal predictions
+if(args.resize==True or not submission_flag):
+    filenames = os.listdir(predict_path)
+    testGene = testGenerator(predict_path)
+else:
+    prepare_4to1data(predict_path, predict_4to1_path)
+    filenames = os.listdir(predict_4to1_path)
+    testGene = testGenerator(predict_4to1_path)
+    count = count*4
+
 # load best model from training and predict results
-model.load_weights("./unet_roadseg.hdf5")
+model.load_weights(os.path.join(log_path,"unet_roadseg.hdf5"))
 results = model.predict_generator(testGene,count,verbose=1)
 post_results = np.where(results > 0.5, 1, 0)
 
 output_path=os.path.join(output_path,args.desc)
 os.mkdir(output_path)
+
+
+output_path_4to1 = os.path.join(output_path, "split_results")
+os.mkdir(output_path_4to1)
+output_path_4to1_pre = os.path.join(output_path_4to1, "split_results_pre")
+os.mkdir(output_path_4to1_pre)
 
 output_path_pre=os.path.join(output_path,"pre_results")
 os.mkdir(output_path_pre)
@@ -104,5 +125,15 @@ if(not submission_flag):
     saveResult(output_path, post_results, filenames)
     saveResultunprocessed(output_path_pre, results, filenames)
 else:
-    savesubmitResult(temp_path, output_path, post_results, filenames)
-    saveResultunprocessed(output_path_pre, results, filenames)
+    if(args.resize==True):
+        savesubmitResult(temp_path, output_path, post_results, filenames)
+        saveResultunprocessed(output_path_pre, results, filenames)
+    else:
+        savesubmitResult_4to1version(output_path_4to1, post_results, filenames)
+        saveResultunprocessed(output_path_4to1_pre, results, filenames)
+        if(args.combine_max==True):
+            print("combining image using max")
+            postprocess_4to1data_max(predict_path, output_path_4to1, output_path)
+        else:
+            print("combining image using average")
+            postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path)

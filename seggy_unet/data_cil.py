@@ -64,6 +64,66 @@ def testGenerator(test_path,target_size = (400,400)):
         img = np.reshape(img,(1,)+img.shape)
         yield img
 
+def prepare_4to1data(predict_path, predict_4to1_path):
+    for image in os.listdir(predict_path):
+        img = io.imread(os.path.join(predict_path, image))
+        nr = os.path.splitext(image)[0]
+        # split image into 4
+        part1 = img[0:400, 0:400, :]
+        part2 = img[0:400, -400:, :]
+        part3 = img[-400:, 0:400, :]
+        part4 = img[-400:, -400:, :]
+        io.imsave(os.path.join(predict_4to1_path, nr + "_1.png"), part1)
+        io.imsave(os.path.join(predict_4to1_path, nr + "_2.png"), part2)
+        io.imsave(os.path.join(predict_4to1_path, nr + "_3.png"), part3)
+        io.imsave(os.path.join(predict_4to1_path, nr + "_4.png"), part4)
+
+def postprocess_4to1data_max(predict_path, output_path_4to1, output_path, alpha=0.5):
+    for image in os.listdir(predict_path):
+        init = np.zeros([608, 608])
+        nr = os.path.splitext(image)[0]
+        recover1 = io.imread(os.path.join(output_path_4to1, nr + "_1.png"))
+        recover2 = io.imread(os.path.join(output_path_4to1, nr + "_2.png"))
+        recover3 = io.imread(os.path.join(output_path_4to1, nr + "_3.png"))
+        recover4 = io.imread(os.path.join(output_path_4to1, nr + "_4.png"))
+
+        # calculating max result (from 1 outputs)
+        init[0:400, 0:400] = np.maximum(init[0:400, 0:400], recover1)
+        init[0:400, -400:] = np.maximum(init[0:400, -400:], recover2)
+        init[-400:, 0:400] = np.maximum(init[-400:, 0:400], recover3)
+        init[-400:, -400:] = np.maximum(init[-400:, -400:], recover4)
+
+        init = np.where(init > alpha, 1, 0)
+
+        io.imsave(os.path.join(output_path, nr + ".png"), init)
+
+def postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path, alpha=0.5):
+
+    norm=np.zeros([608,608])
+    norm[0:400,0:400]+=np.ones([400,400])
+    norm[0:400,-400:]+=np.ones([400,400])
+    norm[-400:,0:400]+=np.ones([400,400])
+    norm[-400:,-400:]+=np.ones([400,400])
+
+    for image in os.listdir(predict_path):
+        init = np.zeros([608, 608])
+        nr = os.path.splitext(image)[0]
+        recover1 = io.imread(os.path.join(output_path_4to1_pre, nr + "_1.png"))
+        recover2 = io.imread(os.path.join(output_path_4to1_pre, nr + "_2.png"))
+        recover3 = io.imread(os.path.join(output_path_4to1_pre, nr + "_3.png"))
+        recover4 = io.imread(os.path.join(output_path_4to1_pre, nr + "_4.png"))
+
+        # calculating max result (from 1 outputs)
+        init[0:400, 0:400] += recover1
+        init[0:400, -400:] += recover2
+        init[-400:, 0:400] += recover3
+        init[-400:, -400:] += recover4
+
+        init = np.divide(init, norm)
+        post_init = np.where(init > alpha, 1, 0)
+
+        io.imsave(os.path.join(output_path, nr + ".png"), post_init)
+
 def geneTrainNpy(image_path,mask_path,num_class = 2,image_prefix = "image",mask_prefix = "mask",image_as_gray = True,mask_as_gray = True):
     image_name_arr = glob.glob(os.path.join(image_path,"%s*.png"%image_prefix))
     image_arr = []
@@ -106,3 +166,12 @@ def savesubmitResult(temp_path,save_path, npyfile, filenames):
         img2 = io.imread(os.path.join(temp_path, filenames[i]))
         img2 = trans.resize(img2, [608, 608])
         io.imsave(os.path.join(save_path,filenames[i]),img2)
+
+def savesubmitResult_4to1version(save_path, npyfile, filenames):
+    for i,item in enumerate(npyfile):
+        img = item[:,:,0]
+        img = img*255
+        io.imsave(os.path.join(save_path, filenames[i]), img)
+        #img2 = io.imread(os.path.join(temp_path, filenames[i]))
+        #img2 = trans.resize(img2, [608, 608])
+        #io.imsave(os.path.join(save_path,filenames[i]),img2)

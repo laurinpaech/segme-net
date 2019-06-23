@@ -25,17 +25,17 @@ Notes:
 
 1. first load env on leonhard
     
-    
+  
     module load gcc/4.8.5 python_gpu/3.6.4 hdf5 eth_proxy
     
     module load cudnn/7.0
 
-2.. then run (currently really fast, ca. 1min/epoch, so 4 hours is easily enough)
+2.. then run (currently really fast, ca. 10s/epoch, so 4 hours is easily enough)
 
     bsub -n 4 -W 4:00 -R "rusage[mem=2048, ngpus_excl_p=1]" python main_cil.py --desc "my_test_model" \
-                     --epochs 10 --rotation 45 --width_shift_range 0.1 --height_shift_range 0.1 \
-                     --shear_range 0.1 --zoom_range 0.1 --horizontal_flip True --fill_mode "nearest"
-    
+                     --epochs 300 --rotation 360 --width_shift_range 0.1 --height_shift_range 0.1 \
+                     --shear_range 0.1 --zoom_range 0.1 --horizontal_flip=True --fill_mode "reflect" \
+                     --resize=True --submission=False
 
 check progress with (note, after each epoch, also calculates valid-loss)
 
