@@ -38,20 +38,18 @@ args = parser.parse_args()
 # end of argument handling
 
 
+# log folder is created with description as name
 log_path=os.path.join("./logs/",args.desc)
 tensorboard = TensorBoard(log_dir=log_path, histogram_freq=0,
                           write_graph=True, write_images=False)
 
 #os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-
-
-
-
-
 submission_flag = args.submission
 nr_of_epochs = args.epochs
 
+# if submission is true, will generate test output, and train with all data
+# if submission is false, will train with 90 samples, and use 10 for validation
 if not submission_flag:
     train_path = "data/roadseg/train"
     valid_path = "data/roadseg/valid"
@@ -78,11 +76,16 @@ data_gen_args = dict(rotation_range=args.rotation,
                     horizontal_flip=args.horizontal_flip,
                     fill_mode=args.fill_mode)
 
+# training generator, note at each epoch the samples are perturbed using the data_gen_args
+# save_to_dir allows to save those perturbed samples if you want to see how it looks
 trainGen = trainGenerator(2,train_path,'image', 'label',data_gen_args,save_to_dir = None)
 
+# we only validate, if it's not a submission run
 if(not submission_flag):
     validGen = trainGenerator(2,valid_path,'image', 'label',data_gen_args,save_to_dir = None)
 
+# model is saved in log_folder
+# only the best model (defined by monitor-metric) is saved
 model = unet()
 model_checkpoint_train = ModelCheckpoint(os.path.join(log_path,'unet_roadseg.hdf5'), monitor='val_acc',verbose=1, save_best_only=True)
 model_checkpoint_submit = ModelCheckpoint(os.path.join(log_path,'unet_roadseg.hdf5'), monitor='acc',verbose=1, save_best_only=True)
@@ -94,7 +97,11 @@ if(not submission_flag):
 else:
     model.fit_generator(trainGen, steps_per_epoch=100, epochs=nr_of_epochs, callbacks=[model_checkpoint_submit, tensorboard])
 
-# choose prediction type (either resize or 4to1), for valid resize is just normal predictions
+# choose predictions
+# - for valid resize is just normal predictions
+# - for predictions we must deal with 608x608x dimensions (instead of 400x400x during training)
+# if resize is true -> just resize images
+# if resize is false -> we split 608x608 into 4 (partially overlapping) images, and then after recombine them
 if(args.resize==True or not submission_flag):
     filenames = os.listdir(predict_path)
     testGene = testGenerator(predict_path)
@@ -107,17 +114,17 @@ else:
 # load best model from training and predict results
 model.load_weights(os.path.join(log_path,"unet_roadseg.hdf5"))
 results = model.predict_generator(testGene,count,verbose=1)
+# output is in range 0 to 1, we want binary output for final predictions
+# this 0.5 value can be chosen differently
 post_results = np.where(results > 0.5, 1, 0)
 
+# create all required output folders
 output_path=os.path.join(output_path,args.desc)
 os.mkdir(output_path)
-
-
 output_path_4to1 = os.path.join(output_path, "split_results")
 os.mkdir(output_path_4to1)
 output_path_4to1_pre = os.path.join(output_path_4to1, "split_results_pre")
 os.mkdir(output_path_4to1_pre)
-
 output_path_pre=os.path.join(output_path,"pre_results")
 os.mkdir(output_path_pre)
 

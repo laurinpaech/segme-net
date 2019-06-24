@@ -58,6 +58,10 @@ def trainGenerator(batch_size,train_path,image_folder,mask_folder,aug_dict,image
 
 
 def testGenerator(test_path,target_size = (400,400)):
+    '''
+    create generator for test data.
+    Using resizing from 608x608 to 400x400, since network is trained on 400x400, and test is 608x608x
+    '''
     for filename in os.listdir(test_path):
         img = io.imread(os.path.join(test_path,filename))
         img = trans.resize(img,target_size)
@@ -65,6 +69,11 @@ def testGenerator(test_path,target_size = (400,400)):
         yield img
 
 def prepare_4to1data(predict_path, predict_4to1_path):
+    '''
+    create generator for test data.
+    Since network is trained on 400x400, and test is 608x608x. We split the test images into 4 images of size 400x400.
+    And after prediction will recombine them.
+    '''
     for image in os.listdir(predict_path):
         img = io.imread(os.path.join(predict_path, image))
         nr = os.path.splitext(image)[0]
@@ -79,9 +88,13 @@ def prepare_4to1data(predict_path, predict_4to1_path):
         io.imsave(os.path.join(predict_4to1_path, nr + "_4.png"), part4)
 
 def postprocess_4to1data_max(predict_path, output_path_4to1, output_path, alpha=0.5):
+    '''
+    Recombining 4 test images into 1, for the overlapping part we just use the maximum.
+    '''
     for image in os.listdir(predict_path):
         init = np.zeros([608, 608])
         nr = os.path.splitext(image)[0]
+        # Images have been saved in folder using "imagenr_1.png, imagenr_2.png, .."
         recover1 = io.imread(os.path.join(output_path_4to1, nr + "_1.png"))
         recover2 = io.imread(os.path.join(output_path_4to1, nr + "_2.png"))
         recover3 = io.imread(os.path.join(output_path_4to1, nr + "_3.png"))
@@ -98,7 +111,12 @@ def postprocess_4to1data_max(predict_path, output_path_4to1, output_path, alpha=
         io.imsave(os.path.join(output_path, nr + ".png"), init)
 
 def postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path, alpha=0.5):
-
+    '''
+    Recombining 4 test images into 1, for the overlapping part we use the average.
+    Note: we use the images before having a probability cutoff (of alpha) to sum up.
+        Then we normalize element wise using the norm-matrix, and after do the
+        probability cutoff.
+    '''
     norm=np.zeros([608,608])
     norm[0:400,0:400]+=np.ones([400,400])
     norm[0:400,-400:]+=np.ones([400,400])
@@ -125,6 +143,10 @@ def postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path, al
         io.imsave(os.path.join(output_path, nr + ".png"), post_init)
 
 def geneTrainNpy(image_path,mask_path,num_class = 2,image_prefix = "image",mask_prefix = "mask",image_as_gray = True,mask_as_gray = True):
+    """
+    probably not used, legacy
+    """
+
     image_name_arr = glob.glob(os.path.join(image_path,"%s*.png"%image_prefix))
     image_arr = []
     mask_arr = []
@@ -142,6 +164,7 @@ def geneTrainNpy(image_path,mask_path,num_class = 2,image_prefix = "image",mask_
 
 
 def labelVisualize(num_class,color_dict,img):
+    """ probably not used, legacy"""
     img = img[:,:,0] if len(img.shape) == 3 else img
     img_out = np.zeros(img.shape + (3,))
     for i in range(num_class):
@@ -149,16 +172,21 @@ def labelVisualize(num_class,color_dict,img):
     return img_out / 255
 
 def saveResultunprocessed(save_path,npyfile, filenames):
+    """ saver for predictions without probablity cutoff"""
     for i,item in enumerate(npyfile):
         img = item[:,:,0]
         io.imsave(os.path.join(save_path, filenames[i]), img)
 
 def saveResult(save_path,npyfile, filenames):
+    """ saver for predictions with probablity cutoff used"""
     for i,item in enumerate(npyfile):
         img = item[:,:,0]*255
         io.imsave(os.path.join(save_path, filenames[i]), img)
 
 def savesubmitResult(temp_path,save_path, npyfile, filenames):
+    """ Output of test data should be 608x608. Network output is 400x400.
+        We resize output from 400x400 to 608x608
+    """
     for i,item in enumerate(npyfile):
         img = item[:,:,0]
         img = img*255
@@ -168,6 +196,9 @@ def savesubmitResult(temp_path,save_path, npyfile, filenames):
         io.imsave(os.path.join(save_path,filenames[i]),img2)
 
 def savesubmitResult_4to1version(save_path, npyfile, filenames):
+    """"
+        In main-cil 4 test output predictions have already been combined, thus here just saving of the result.
+    """
     for i,item in enumerate(npyfile):
         img = item[:,:,0]
         img = img*255
