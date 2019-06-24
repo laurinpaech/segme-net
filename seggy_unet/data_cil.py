@@ -6,6 +6,7 @@ import glob
 import skimage.io as io
 import skimage.transform as trans
 
+
 Road = [255,255,255]
 Unlabelled = [0,0,0]
 
@@ -67,6 +68,104 @@ def testGenerator(test_path,target_size = (400,400)):
         img = trans.resize(img,target_size)
         img = np.reshape(img,(1,)+img.shape)
         yield img
+
+def prepare_ensamble(operation_path, output_path):
+    '''
+    Augment data from operation_path and add some changes to them, save new data into output_path.
+    :param operation_path: data to be augmented.
+    :param output_path: augmented saved data.
+    :return:
+    '''
+    for image in os.listdir(operation_path):
+        img = io.imread(os.path.join(operation_path, image))
+        nr = os.path.splitext(image)[0]
+
+        # split images into 4 identicall images
+        img1 = img
+        img2 = img
+        img3 = img
+        img4 = img
+
+        img5 = img[:, ::-1]
+        img6 = img[:, ::-1]
+        img7 = img[:, ::-1]
+        img8 = img[:, ::-1]
+
+        # augment images
+        img2 = trans.rotate(img2, 90)
+        img3 = trans.rotate(img3, 180)
+        img4 = trans.rotate(img4, 270)
+
+        img6 = trans.rotate(img6, 90)
+        img7 = trans.rotate(img7, 180)
+        img8 = trans.rotate(img8, 270)
+
+        # save images into output_path
+        io.imsave(os.path.join(output_path, nr + "_1.png"), img1)
+        io.imsave(os.path.join(output_path, nr + "_2.png"), img2)
+        io.imsave(os.path.join(output_path, nr + "_3.png"), img3)
+        io.imsave(os.path.join(output_path, nr + "_4.png"), img4)
+        io.imsave(os.path.join(output_path, nr + "_5.png"), img5)
+        io.imsave(os.path.join(output_path, nr + "_6.png"), img6)
+        io.imsave(os.path.join(output_path, nr + "_7.png"), img7)
+        io.imsave(os.path.join(output_path, nr + "_8.png"), img8)
+
+
+def saveSubmitResizeEnsamble(temp_path, output_path_ensambled, output_path):
+    for image in os.listdir(output_path_ensambled):
+        img = io.imread(os.path.join(output_path_ensambled, image))
+        io.imsave(os.path.join(temp_path, image), img)
+
+        img2 = io.imread(os.path.join(temp_path, image))
+        img2 = trans.resize(img2, [608, 608])
+        io.imsave(os.path.join(output_path, image), img2)
+
+def ensamble(predict_path, output_path_pre_ensambled, output_path_ensambled, alpha = 0.5):
+    '''
+    Ensamble using output_path_pre_ensambled and names from predict_path and save to output_path.
+    Strategy is avg.
+    :param predict_path:
+    :param output_path_pre_ensambled:
+    :param output_path_ensambled:
+    :return:
+    '''
+    norm = np.ones([400, 400]) * 8
+
+    for image in os.listdir(predict_path):
+
+        nr = os.path.splitext(image)[0]
+        recover1 = io.imread(os.path.join(output_path_pre_ensambled, nr + "_1.png"))
+        recover2 = io.imread(os.path.join(output_path_pre_ensambled, nr + "_2.png"))
+        recover3 = io.imread(os.path.join(output_path_pre_ensambled, nr + "_3.png"))
+        recover4 = io.imread(os.path.join(output_path_pre_ensambled, nr + "_4.png"))
+        recover5 = io.imread(os.path.join(output_path_pre_ensambled, nr + "_5.png"))
+        recover6 = io.imread(os.path.join(output_path_pre_ensambled, nr + "_6.png"))
+        recover7 = io.imread(os.path.join(output_path_pre_ensambled, nr + "_7.png"))
+        recover8 = io.imread(os.path.join(output_path_pre_ensambled, nr + "_8.png"))
+
+        # restore to original form
+        recover2 = trans.rotate(recover2, -90)
+        recover3 = trans.rotate(recover3, -180)
+        recover4 = trans.rotate(recover4, -270)
+
+        recover6 = trans.rotate(recover6, -90)
+        recover7 = trans.rotate(recover7, -180)
+        recover8 = trans.rotate(recover8, -270)
+
+        recover5 = recover5[:, ::-1]
+        recover6 = recover6[:, ::-1]
+        recover7 = recover7[:, ::-1]
+        recover8 = recover8[:, ::-1]
+
+        # combine using avg
+        avg = recover1 + recover2 + recover3 + recover4 + recover5 + recover6 + recover7 + recover8
+        avg = np.divide(avg, norm)
+
+        val = np.where(avg > alpha, 1, 0)
+
+        io.imsave(os.path.join(output_path_ensambled, nr + ".png"), val)
+
+
 
 def prepare_4to1data(predict_path, predict_4to1_path):
     '''
