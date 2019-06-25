@@ -100,13 +100,17 @@ def postprocess_4to1data_max(predict_path, output_path_4to1, output_path, alpha=
         recover3 = io.imread(os.path.join(output_path_4to1, nr + "_3.png"))
         recover4 = io.imread(os.path.join(output_path_4to1, nr + "_4.png"))
 
+        # adjust data
+        recover1=recover1/255
+        recover2=recover2/255
+        recover3=recover3/255
+        recover4=recover4/255
+
         # calculating max result (from 1 outputs)
         init[0:400, 0:400] = np.maximum(init[0:400, 0:400], recover1)
         init[0:400, -400:] = np.maximum(init[0:400, -400:], recover2)
         init[-400:, 0:400] = np.maximum(init[-400:, 0:400], recover3)
         init[-400:, -400:] = np.maximum(init[-400:, -400:], recover4)
-
-        init = np.where(init > alpha, 1, 0)
 
         io.imsave(os.path.join(output_path, nr + ".png"), init)
 
@@ -127,9 +131,19 @@ def postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path, al
         init = np.zeros([608, 608])
         nr = os.path.splitext(image)[0]
         recover1 = io.imread(os.path.join(output_path_4to1_pre, nr + "_1.png"))
+        recover1 = recover1.astype(float)
         recover2 = io.imread(os.path.join(output_path_4to1_pre, nr + "_2.png"))
+        recover2 = recover2.astype(float)
         recover3 = io.imread(os.path.join(output_path_4to1_pre, nr + "_3.png"))
+        recover3 = recover3.astype(float)
         recover4 = io.imread(os.path.join(output_path_4to1_pre, nr + "_4.png"))
+        recover4 = recover4.astype(float)
+
+        #normalize data (apparently here max is 256*256)
+        recover1 = recover1 / 65536
+        recover2 = recover2 / 65536
+        recover3 = recover3 / 65536
+        recover4 = recover4 / 65536
 
         # calculating max result (from 1 outputs)
         init[0:400, 0:400] += recover1
@@ -140,7 +154,7 @@ def postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path, al
         init = np.divide(init, norm)
         post_init = np.where(init > alpha, 1, 0)
 
-        io.imsave(os.path.join(output_path, nr + ".png"), post_init)
+        io.imsave(os.path.join(output_path, nr + ".png"), post_init*255)
 
 def geneTrainNpy(image_path,mask_path,num_class = 2,image_prefix = "image",mask_prefix = "mask",image_as_gray = True,mask_as_gray = True):
     """
