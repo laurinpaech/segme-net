@@ -34,7 +34,7 @@ Notes:
 
     bsub -n 4 -W 4:00 -R "rusage[mem=2048, ngpus_excl_p=1]" python main_cil.py --desc "my_test_model" \
                      --epochs 300 --rotation 360 --width_shift_range 0.1 --height_shift_range 0.1 \
-                     --shear_range 0.1 --zoom_range 0.1 --horizontal_flip=True --fill_mode "reflect" \
+                         --shear_range 0.1 --zoom_range 0.1 --horizontal_flip=True --fill_mode "reflect" \
                      --resize=True --submission=False
 
 check progress with (note, after each epoch, also calculates valid-loss)
