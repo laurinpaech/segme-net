@@ -76,6 +76,7 @@ def prepare_ensamble(operation_path, output_path):
     :param output_path: augmented saved data.
     :return:
     '''
+    print("===== Prepare Ensamble Data - Saved Inside {0} =====".format(output_path))
     for image in os.listdir(operation_path):
         img = io.imread(os.path.join(operation_path, image))
         nr = os.path.splitext(image)[0]
@@ -112,6 +113,9 @@ def prepare_ensamble(operation_path, output_path):
 
 
 def saveSubmitResizeEnsamble(temp_path, output_path_ensambled, output_path):
+    print("Saving submission results inside: ", output_path)
+    print("Using temp path to resize the images before saving: " + temp_path)
+    os.makedirs(temp_path, exist_ok=True)
     for image in os.listdir(output_path_ensambled):
         img = io.imread(os.path.join(output_path_ensambled, image))
         io.imsave(os.path.join(temp_path, image), img)
@@ -120,7 +124,7 @@ def saveSubmitResizeEnsamble(temp_path, output_path_ensambled, output_path):
         img2 = trans.resize(img2, [608, 608])
         io.imsave(os.path.join(output_path, image), img2)
 
-def ensamble(predict_path, output_path_pre_ensambled, output_path_ensambled, alpha = 0.5):
+def ensamble_predictions(predict_path, output_path_pre_ensambled, output_path_ensambled, alpha = 0.5):
     '''
     Ensamble using output_path_pre_ensambled and names from predict_path and save to output_path.
     Strategy is avg.
@@ -129,6 +133,7 @@ def ensamble(predict_path, output_path_pre_ensambled, output_path_ensambled, alp
     :param output_path_ensambled:
     :return:
     '''
+    print("Ensamble predictions, and save them inside: ", output_path_ensambled)
     norm = np.ones([400, 400]) * 8
 
     for image in os.listdir(predict_path):
@@ -142,6 +147,20 @@ def ensamble(predict_path, output_path_pre_ensambled, output_path_ensambled, alp
         recover6 = io.imread(os.path.join(output_path_pre_ensambled, nr + "_6.png"))
         recover7 = io.imread(os.path.join(output_path_pre_ensambled, nr + "_7.png"))
         recover8 = io.imread(os.path.join(output_path_pre_ensambled, nr + "_8.png"))
+
+        print("MAX of recover1", np.max(recover1))
+        # if value is 0 try casting recover1 as float and normalize
+        # 255 * 255
+        recover1 = recover1 / 65025
+        recover2 = recover2 / 65025
+        recover3 = recover3 / 65025
+        recover4 = recover4 / 65025
+        recover5 = recover5 / 65025
+        recover6 = recover6 / 65025
+        recover7 = recover7 / 65025
+        recover8 = recover8 / 65025
+
+        print("AFTER NORM: MAX of recover1", np.max(recover1))
 
         # restore to original form
         recover2 = trans.rotate(recover2, -90)
@@ -162,7 +181,7 @@ def ensamble(predict_path, output_path_pre_ensambled, output_path_ensambled, alp
         avg = np.divide(avg, norm)
 
         val = np.where(avg > alpha, 1, 0)
-
+        val = val * 255
         io.imsave(os.path.join(output_path_ensambled, nr + ".png"), val)
 
 
@@ -173,6 +192,8 @@ def prepare_4to1data(predict_path, predict_4to1_path):
     Since network is trained on 400x400, and test is 608x608x. We split the test images into 4 images of size 400x400.
     And after prediction will recombine them.
     '''
+    print("===== Prepare 4 to 1 Data =====")
+    os.makedirs(predict_4to1_path, exist_ok=True)
     for image in os.listdir(predict_path):
         img = io.imread(os.path.join(predict_path, image))
         nr = os.path.splitext(image)[0]
@@ -209,7 +230,7 @@ def postprocess_4to1data_max(predict_path, output_path_4to1, output_path, alpha=
 
         io.imsave(os.path.join(output_path, nr + ".png"), init)
 
-def postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path, alpha=0.5):
+def postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path, alpha=0.5, norm_val=1):
     '''
     Recombining 4 test images into 1, for the overlapping part we use the average.
     Note: we use the images before having a probability cutoff (of alpha) to sum up.
@@ -217,10 +238,10 @@ def postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path, al
         probability cutoff.
     '''
     norm=np.zeros([608,608])
-    norm[0:400,0:400]+=np.ones([400,400])
-    norm[0:400,-400:]+=np.ones([400,400])
-    norm[-400:,0:400]+=np.ones([400,400])
-    norm[-400:,-400:]+=np.ones([400,400])
+    norm[0:400,0:400]+=np.ones([400,400]) * norm_val
+    norm[0:400,-400:]+=np.ones([400,400]) * norm_val
+    norm[-400:,0:400]+=np.ones([400,400]) * norm_val
+    norm[-400:,-400:]+=np.ones([400,400]) * norm_val
 
     for image in os.listdir(predict_path):
         init = np.zeros([608, 608])
@@ -238,7 +259,7 @@ def postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path, al
 
         init = np.divide(init, norm)
         post_init = np.where(init > alpha, 1, 0)
-
+        post_init *= norm_val
         io.imsave(os.path.join(output_path, nr + ".png"), post_init)
 
 def geneTrainNpy(image_path,mask_path,num_class = 2,image_prefix = "image",mask_prefix = "mask",image_as_gray = True,mask_as_gray = True):
@@ -272,12 +293,14 @@ def labelVisualize(num_class,color_dict,img):
 
 def saveResultunprocessed(save_path,npyfile, filenames):
     """ saver for predictions without probablity cutoff"""
+    print("Saving unprocessed results inside: ", save_path)
     for i,item in enumerate(npyfile):
         img = item[:,:,0]
         io.imsave(os.path.join(save_path, filenames[i]), img)
 
 def saveResult(save_path,npyfile, filenames):
     """ saver for predictions with probablity cutoff used"""
+    print("Saving results inside: ", save_path)
     for i,item in enumerate(npyfile):
         img = item[:,:,0]*255
         io.imsave(os.path.join(save_path, filenames[i]), img)
@@ -286,6 +309,9 @@ def savesubmitResult(temp_path,save_path, npyfile, filenames):
     """ Output of test data should be 608x608. Network output is 400x400.
         We resize output from 400x400 to 608x608
     """
+    print("Saving submission results inside: ", save_path)
+    print("Using temp path to resize the images before saving: " + temp_path)
+    os.makedirs(temp_path, exist_ok=True)
     for i,item in enumerate(npyfile):
         img = item[:,:,0]
         img = img*255
@@ -298,6 +324,7 @@ def savesubmitResult_4to1version(save_path, npyfile, filenames):
     """"
         In main-cil 4 test output predictions have already been combined, thus here just saving of the result.
     """
+    print("Saving submission results 4to1 inside: ", save_path)
     for i,item in enumerate(npyfile):
         img = item[:,:,0]
         img = img*255

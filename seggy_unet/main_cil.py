@@ -107,10 +107,11 @@ else:
 # - for predictions we must deal with 608x608x dimensions (instead of 400x400x during training)
 # if resize is true -> just resize images
 # if resize is false -> we split 608x608 into 4 (partially overlapping) images, and then after recombine them
+os.makedirs(predict_ensamble_path, exist_ok=True)
 if(args.resize==True or not submission_flag):
     if (ensamble):
         count = count * 8
-        prepare_ensamble(predict_path, predict_ensamble_path)
+        #prepare_ensamble(predict_path, predict_ensamble_path)
         filenames = os.listdir(predict_ensamble_path)
         testGene = testGenerator(predict_ensamble_path)
     else:
@@ -134,6 +135,7 @@ else:
 
 # load best model from training and predict results
 model.load_weights(os.path.join(log_path,"unet_roadseg.hdf5"))
+print("===== STARTED PREDICTING =====")
 results = model.predict_generator(testGene,count,verbose=1)
 
 
@@ -143,41 +145,41 @@ post_results = np.where(results > 0.5, 1, 0)
 
 # create all required output folders
 output_path=os.path.join(output_path,args.desc)
-os.mkdir(output_path)
+os.makedirs(output_path, exist_ok=True)
 output_path_4to1 = os.path.join(output_path, "split_results")
-os.mkdir(output_path_4to1)
+os.makedirs(output_path_4to1, exist_ok=True)
 output_path_4to1_pre = os.path.join(output_path_4to1, "split_results_pre")
-os.mkdir(output_path_4to1_pre)
+os.makedirs(output_path_4to1_pre, exist_ok=True)
 output_path_pre=os.path.join(output_path,"pre_results")
-os.mkdir(output_path_pre)
+os.makedirs(output_path_pre, exist_ok=True)
 
 output_path_pre_ensambled=os.path.join(output_path,"pre_ensambled")
-os.mkdir(output_path_pre_ensambled)
+os.makedirs(output_path_pre_ensambled, exist_ok=True)
 output_path_ensambled=os.path.join(output_path,"ensambled")
-os.mkdir(output_path_ensambled)
+os.makedirs(output_path_ensambled, exist_ok=True)
 
 if(not submission_flag):
     if (ensamble):
         saveResult(output_path_pre_ensambled, results, filenames) # saves the results inside the pre ensambled output path
-        ensamble(predict_path, output_path_pre_ensambled, output_path) # ensamble using output_path_pre_ensambled and names from predict_path and save to output_path
+        ensamble_predictions(predict_path, output_path_pre_ensambled, output_path) # ensamble using output_path_pre_ensambled and names from predict_path and save to output_path
     else:
         saveResult(output_path, post_results, filenames)
         saveResultunprocessed(output_path_pre, results, filenames)
 else:
     if(args.resize==True):
         if (ensamble):
-            saveResult(output_path_pre_ensambled, results, filenames)
-            ensamble(predict_path, output_path_pre_ensambled, output_path_ensambled) # save into output_path_ensambled because need resize
+            saveResultunprocessed(output_path_pre_ensambled, results, filenames)
+            ensamble_predictions(predict_path, output_path_pre_ensambled, output_path_ensambled) # save into output_path_ensambled because need resize
             saveSubmitResizeEnsamble(temp_path, output_path_ensambled, output_path) # resize imgs in output_path_ensambled to 608x608 and save
         else:
             savesubmitResult(temp_path, output_path, post_results, filenames)
             saveResultunprocessed(output_path_pre, results, filenames)
     else:
         if (ensamble):
-            saveResult(output_path_pre_ensambled, results, filenames)
-            ensamble(predict_4to1_path, output_path_pre_ensambled, output_path_4to1_pre)
+            saveResultunprocessed(output_path_pre_ensambled, results, filenames)
+            ensamble_predictions(predict_4to1_path, output_path_pre_ensambled, output_path_4to1_pre)
             print("combining image using average")
-            postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path)
+            postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path, norm_val=255)
 
         else:
             savesubmitResult_4to1version(output_path_4to1, post_results, filenames)
