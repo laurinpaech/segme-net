@@ -247,9 +247,20 @@ def postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path, al
         init = np.zeros([608, 608])
         nr = os.path.splitext(image)[0]
         recover1 = io.imread(os.path.join(output_path_4to1_pre, nr + "_1.png"))
+        recover1 = recover1.astype(float)
         recover2 = io.imread(os.path.join(output_path_4to1_pre, nr + "_2.png"))
+        recover2 = recover2.astype(float)
         recover3 = io.imread(os.path.join(output_path_4to1_pre, nr + "_3.png"))
+        recover3 = recover3.astype(float)
         recover4 = io.imread(os.path.join(output_path_4to1_pre, nr + "_4.png"))
+        recover4 = recover4.astype(float)
+
+        # normalize if needed (if ensemble is active it is not necessary, if ensemble is false norm_val is 1)
+        if (norm_val == 1):
+            recover1 = recover1 / 65025
+            recover2 = recover2 / 65025
+            recover3 = recover3 / 65025
+            recover4 = recover4 / 65025
 
         # calculating max result (from 1 outputs)
         init[0:400, 0:400] += recover1
@@ -259,8 +270,8 @@ def postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path, al
 
         init = np.divide(init, norm)
         post_init = np.where(init > alpha, 1, 0)
-        post_init *= norm_val
-        io.imsave(os.path.join(output_path, nr + ".png"), post_init)
+
+        io.imsave(os.path.join(output_path, nr + ".png"), post_init*255)
 
 def geneTrainNpy(image_path,mask_path,num_class = 2,image_prefix = "image",mask_prefix = "mask",image_as_gray = True,mask_as_gray = True):
     """
