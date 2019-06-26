@@ -87,8 +87,8 @@ if(not submission_flag):
 # model is saved in log_folder
 # only the best model (defined by monitor-metric) is saved
 model = unet()
-model_checkpoint_train = ModelCheckpoint(os.path.join(log_path,'unet_roadseg.hdf5'), monitor='val_acc',verbose=1, save_best_only=True)
-model_checkpoint_submit = ModelCheckpoint(os.path.join(log_path,'unet_roadseg.hdf5'), monitor='acc',verbose=1, save_best_only=True)
+model_checkpoint_train = ModelCheckpoint(os.path.join(log_path,'unet_roadseg_{epoch:04d}.hdf5'), monitor='val_acc',verbose=1, period=50)
+model_checkpoint_submit = ModelCheckpoint(os.path.join(log_path,'unet_roadseg_{epoch:04d}.hdf5'), monitor='acc',verbose=1, period=50)
 
 
 if(not submission_flag):

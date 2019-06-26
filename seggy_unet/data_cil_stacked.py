@@ -122,10 +122,10 @@ def postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path, al
         recover4 = recover4.astype(float)
 
         #normalize data (apparently here max is 256*256)
-        recover1 = recover1 / 65536
-        recover2 = recover2 / 65536
-        recover3 = recover3 / 65536
-        recover4 = recover4 / 65536
+        recover1 = recover1 / 65025
+        recover2 = recover2 / 65025
+        recover3 = recover3 / 65025
+        recover4 = recover4 / 65025
 
         # calculating max result (from 1 outputs)
         init[0:400, 0:400] += recover1
