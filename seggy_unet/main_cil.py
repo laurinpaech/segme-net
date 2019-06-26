@@ -32,6 +32,8 @@ parser.add_argument('--resize', type=bool,
                     help='either resizes submission images or uses splits image into 4 subimages to make predictions' )
 parser.add_argument('--combine_max', type=bool,
                     help='if split image into 4 subimage, can combine using max (True), or using average (False, default)' )
+parser.add_argument('--ensamble', type=bool, help='creates 4 subimages with different properties and predicts on them before merging')
+
 
 
 args = parser.parse_args()
@@ -47,6 +49,7 @@ tensorboard = TensorBoard(log_dir=log_path, histogram_freq=0,
 
 submission_flag = args.submission
 nr_of_epochs = args.epochs
+ensamble = args.ensamble
 
 # if submission is true, will generate test output, and train with all data
 # if submission is false, will train with 90 samples, and use 10 for validation
@@ -54,6 +57,7 @@ if not submission_flag:
     train_path = "data/roadseg/train"
     valid_path = "data/roadseg/valid"
     predict_path = "data/roadseg/valid/image"
+    predict_ensamble_path = ""
     predict_4to1_path = ""
     output_path = "data/roadseg/valid/output"
     temp_path = "data/roadseg/temp"
@@ -63,9 +67,10 @@ else:
     valid_path = "data/roadseg/valid"
     predict_path = "data/roadseg/submit_test"
     predict_4to1_path = "data/roadseg/temp_4to1_folder"
+    predict_ensamble_path = "data/roadseg/test_ensamble"
     output_path = "data/roadseg/submit_output"
     temp_path = "data/roadseg/temp"
-    count=94
+    count=94 # total number of test images
 
 
 data_gen_args = dict(rotation_range=args.rotation,
@@ -102,45 +107,87 @@ else:
 # - for predictions we must deal with 608x608x dimensions (instead of 400x400x during training)
 # if resize is true -> just resize images
 # if resize is false -> we split 608x608 into 4 (partially overlapping) images, and then after recombine them
+os.makedirs(predict_ensamble_path, exist_ok=True)
 if(args.resize==True or not submission_flag):
-    filenames = os.listdir(predict_path)
-    testGene = testGenerator(predict_path)
+    if (ensamble):
+        count = count * 8
+        prepare_ensamble(predict_path, predict_ensamble_path)
+        filenames = os.listdir(predict_ensamble_path)
+        testGene = testGenerator(predict_ensamble_path)
+    else:
+        filenames = os.listdir(predict_path)
+        testGene = testGenerator(predict_path)
+
 else:
     prepare_4to1data(predict_path, predict_4to1_path)
-    filenames = os.listdir(predict_4to1_path)
-    testGene = testGenerator(predict_4to1_path)
-    count = count*4
+    count = count * 4
+
+    # take 4 patches and apply ensamble
+    if (ensamble):
+        count = count * 8
+        prepare_ensamble(predict_4to1_path, predict_ensamble_path)
+        filenames = os.listdir(predict_ensamble_path)
+        testGene = testGenerator(predict_ensamble_path)
+
+    else:
+        filenames = os.listdir(predict_4to1_path)
+        testGene = testGenerator(predict_4to1_path)
 
 # load best model from training and predict results
 model.load_weights(os.path.join(log_path,"unet_roadseg.hdf5"))
+print("===== STARTED PREDICTING =====")
 results = model.predict_generator(testGene,count,verbose=1)
+
+
 # output is in range 0 to 1, we want binary output for final predictions
 # this 0.5 value can be chosen differently
 post_results = np.where(results > 0.5, 1, 0)
 
 # create all required output folders
 output_path=os.path.join(output_path,args.desc)
-os.mkdir(output_path)
+os.makedirs(output_path, exist_ok=True)
 output_path_4to1 = os.path.join(output_path, "split_results")
-os.mkdir(output_path_4to1)
+os.makedirs(output_path_4to1, exist_ok=True)
 output_path_4to1_pre = os.path.join(output_path_4to1, "split_results_pre")
-os.mkdir(output_path_4to1_pre)
+os.makedirs(output_path_4to1_pre, exist_ok=True)
 output_path_pre=os.path.join(output_path,"pre_results")
-os.mkdir(output_path_pre)
+os.makedirs(output_path_pre, exist_ok=True)
+
+output_path_pre_ensambled=os.path.join(output_path,"pre_ensambled")
+os.makedirs(output_path_pre_ensambled, exist_ok=True)
+output_path_ensambled=os.path.join(output_path,"ensambled")
+os.makedirs(output_path_ensambled, exist_ok=True)
 
 if(not submission_flag):
-    saveResult(output_path, post_results, filenames)
-    saveResultunprocessed(output_path_pre, results, filenames)
+    if (ensamble):
+        saveResult(output_path_pre_ensambled, results, filenames) # saves the results inside the pre ensambled output path
+        ensamble_predictions(predict_path, output_path_pre_ensambled, output_path) # ensamble using output_path_pre_ensambled and names from predict_path and save to output_path
+    else:
+        saveResult(output_path, post_results, filenames)
+        saveResultunprocessed(output_path_pre, results, filenames)
 else:
     if(args.resize==True):
-        savesubmitResult(temp_path, output_path, post_results, filenames)
-        saveResultunprocessed(output_path_pre, results, filenames)
-    else:
-        savesubmitResult_4to1version(output_path_4to1, post_results, filenames)
-        saveResultunprocessed(output_path_4to1_pre, results, filenames)
-        if(args.combine_max==True):
-            print("combining image using max")
-            postprocess_4to1data_max(predict_path, output_path_4to1, output_path)
+        if (ensamble):
+            saveResultunprocessed(output_path_pre_ensambled, results, filenames)
+            ensamble_predictions(predict_path, output_path_pre_ensambled, output_path_ensambled) # save into output_path_ensambled because need resize
+            saveSubmitResizeEnsamble(temp_path, output_path_ensambled, output_path) # resize imgs in output_path_ensambled to 608x608 and save
         else:
+            savesubmitResult(temp_path, output_path, post_results, filenames)
+            saveResultunprocessed(output_path_pre, results, filenames)
+    else:
+        if (ensamble):
+            saveResultunprocessed(output_path_pre_ensambled, results, filenames)
+            ensamble_predictions(predict_4to1_path, output_path_pre_ensambled, output_path_4to1_pre)
             print("combining image using average")
-            postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path)
+            postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path, norm_val=255)
+
+        else:
+            savesubmitResult_4to1version(output_path_4to1, post_results, filenames)
+            saveResultunprocessed(output_path_4to1_pre, results, filenames)
+            if(args.combine_max==True):
+                print("combining image using max")
+                postprocess_4to1data_max(predict_path, output_path_4to1, output_path)
+            else:
+                print("combining image using average")
+                postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path)
+
