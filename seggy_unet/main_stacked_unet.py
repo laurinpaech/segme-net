@@ -41,11 +41,20 @@ parser.add_argument('--channel_shift_range', type=float, default = 0,
                     help='random channel_shift_range in [-input,input]')
 parser.add_argument('--batch_size', type=int, default = 2,
                     help='Batch size for training (default: 2) ' )
-
+parser.add_argument('--leakyRelu', default=False, action='store_true',
+                    help='choose if unet should use leaky Relu')
 
 args = parser.parse_args()
 print(args)
 # end of argument handling
+
+
+
+# load correct unet model
+if(args.leakyRelu):
+    from model_stacked_unet_leaky import *
+else:
+    from model_stacked_unet import *
 
 
 log_path=os.path.join("./logs/",args.desc)
