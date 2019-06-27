@@ -11,8 +11,6 @@ parser.add_argument('--desc', type=str, default = 'stacked_unet_default_desc',
                     help='How to name this run, defines folder in logs dir, only use "a-z,A-Z,1-9,_" pls')
 parser.add_argument('--epochs', type=int, default = 300,
                     help='Number of epochs to run')
-parser.add_argument('--submission', type=bool, default = True,
-                    help='to create submission or not')
 parser.add_argument('--rotation', type=int, default = 360,
                     help='rotation perturbation in degrees')
 parser.add_argument('--width_shift_range', type=float, default = 50,
@@ -23,21 +21,21 @@ parser.add_argument('--shear_range', type=float, default = 0,
                     help='shear_range between 0 and 255')
 parser.add_argument('--zoom_range', type=float, default = 0,
                     help='zoom_range BETWEEN 0 AND 1')
-parser.add_argument('--horizontal_flip', type=bool, default = True,
+parser.add_argument('--horizontal_flip', default=False, action='store_true',
                     help='horizontal_flip: True or False')
-parser.add_argument('--vertical_flip', type=bool, default = True,
+parser.add_argument('--vertical_flip', default=False, action='store_true',
                     help='vertical_flip: True or False')
 parser.add_argument('--fill_mode', type=str, default = 'reflect',
                     help='points outside the boundaries of the input are filled according to the given mode, '
                          'standard is nearest')
-parser.add_argument('--resize', type=bool, default = True,
+parser.add_argument('--resize', default=False, action='store_true',
                     help='either resizes submission images or uses splits image into 4 subimages to make predictions' )
-parser.add_argument('--combine_max', type=bool, default = False,
+parser.add_argument('--combine_max', default=False, action='store_true',
                     help='if split image into 4 subimage, can combine using max (True), or using average (False, default)' )
 parser.add_argument('--nr_of_stacks', type=int, default = 2,
                     help='points outside the boundaries of the input are filled according to the given mode, '
                          'standard is nearest')
-parser.add_argument('--ensemble', type=bool, default = True,
+parser.add_argument('--ensemble', default=False, action='store_true',
                     help='predict 8 versions of image with rotations and flipping, and recombine them later')
 parser.add_argument('--channel_shift_range', type=float, default = 0,
                     help='random channel_shift_range in [-input,input]')
@@ -58,7 +56,6 @@ tensorboard = TensorBoard(log_dir=log_path, histogram_freq=0,
 
 ### Initial/Default parameter if none are passed
 
-submission_flag = args.submission
 nr_of_epochs = args.epochs
 ensemble = args.ensemble
 
