@@ -188,6 +188,120 @@ def savesubmitResult_4to1version(save_path, npyfile, filenames, nr_of_stacks):
         img = item[:,:,nr_of_stacks-1]
         img = img*255
         io.imsave(os.path.join(save_path, filenames[i]), img)
-        #img2 = io.imread(os.path.join(temp_path, filenames[i]))
-        #img2 = trans.resize(img2, [608, 608])
-        #io.imsave(os.path.join(save_path,filenames[i]),img2)
+
+def prepare_ensemble(operation_path, output_path):
+    '''
+    Augment data from operation_path and add some changes to them, save new data into output_path.
+    :param operation_path: data to be augmented.
+    :param output_path: augmented saved data.
+    :return:
+    '''
+    print("===== Prepare Ensemble Data - Saved Inside {0} =====".format(output_path))
+    for image in os.listdir(operation_path):
+        img = io.imread(os.path.join(operation_path, image))
+        nr = os.path.splitext(image)[0]
+
+        # split images into 4 identicall images
+        img1 = img
+        img2 = img
+        img3 = img
+        img4 = img
+
+        img5 = img[:, ::-1]
+        img6 = img[:, ::-1]
+        img7 = img[:, ::-1]
+        img8 = img[:, ::-1]
+
+        # augment images
+        img2 = trans.rotate(img2, 90)
+        img3 = trans.rotate(img3, 180)
+        img4 = trans.rotate(img4, 270)
+
+        img6 = trans.rotate(img6, 90)
+        img7 = trans.rotate(img7, 180)
+        img8 = trans.rotate(img8, 270)
+
+        # save images into output_path
+        io.imsave(os.path.join(output_path, nr + "_1.png"), img1)
+        io.imsave(os.path.join(output_path, nr + "_2.png"), img2)
+        io.imsave(os.path.join(output_path, nr + "_3.png"), img3)
+        io.imsave(os.path.join(output_path, nr + "_4.png"), img4)
+        io.imsave(os.path.join(output_path, nr + "_5.png"), img5)
+        io.imsave(os.path.join(output_path, nr + "_6.png"), img6)
+        io.imsave(os.path.join(output_path, nr + "_7.png"), img7)
+        io.imsave(os.path.join(output_path, nr + "_8.png"), img8)
+
+
+
+def saveSubmitResizeEnsemble(temp_path, output_path_ensembled, output_path):
+    print("Saving submission results inside: ", output_path)
+    print("Using temp path to resize the images before saving: " + temp_path)
+    os.makedirs(temp_path, exist_ok=True)
+    for image in os.listdir(output_path_ensembled):
+        img = io.imread(os.path.join(output_path_ensembled, image))
+        io.imsave(os.path.join(temp_path, image), img)
+
+        img2 = io.imread(os.path.join(temp_path, image))
+        img2 = trans.resize(img2, [608, 608])
+        io.imsave(os.path.join(output_path, image), img2)
+
+def ensemble_predictions(predict_path, output_path_pre_ensembled, output_path_ensembled, alpha = 0.5, nr_of_stacks = 1):
+    '''
+    Ensemble using output_path_pre_ensembled and names from predict_path and save to output_path.
+    Strategy is avg.
+    :param predict_path:
+    :param output_path_pre_ensembled:
+    :param output_path_ensembled:
+    :return:
+    '''
+    print("Ensemble predictions, and save them inside: ", output_path_ensembled)
+    norm = np.ones([400, 400]) * 8
+
+    for image in os.listdir(predict_path):
+
+        nr = os.path.splitext(image)[0]
+        recover1 = io.imread(os.path.join(output_path_pre_ensembled, nr + "_1_"+str(nr_of_stacks-1)+".png"))
+        recover2 = io.imread(os.path.join(output_path_pre_ensembled, nr + "_2_"+str(nr_of_stacks-1)+".png"))
+        recover3 = io.imread(os.path.join(output_path_pre_ensembled, nr + "_3_"+str(nr_of_stacks-1)+".png"))
+        recover4 = io.imread(os.path.join(output_path_pre_ensembled, nr + "_4_"+str(nr_of_stacks-1)+".png"))
+        recover5 = io.imread(os.path.join(output_path_pre_ensembled, nr + "_5_"+str(nr_of_stacks-1)+".png"))
+        recover6 = io.imread(os.path.join(output_path_pre_ensembled, nr + "_6_"+str(nr_of_stacks-1)+".png"))
+        recover7 = io.imread(os.path.join(output_path_pre_ensembled, nr + "_7_"+str(nr_of_stacks-1)+".png"))
+        recover8 = io.imread(os.path.join(output_path_pre_ensembled, nr + "_8_"+str(nr_of_stacks-1)+".png"))
+
+        print("MAX of recover1", np.max(recover1))
+        # if value is 0 try casting recover1 as float and normalize
+        # 255 * 255
+        recover1 = recover1 / 65025
+        recover2 = recover2 / 65025
+        recover3 = recover3 / 65025
+        recover4 = recover4 / 65025
+        recover5 = recover5 / 65025
+        recover6 = recover6 / 65025
+        recover7 = recover7 / 65025
+        recover8 = recover8 / 65025
+
+        print("AFTER NORM: MAX of recover1", np.max(recover1))
+
+        # restore to original form
+        recover2 = trans.rotate(recover2, -90)
+        recover3 = trans.rotate(recover3, -180)
+        recover4 = trans.rotate(recover4, -270)
+
+        recover6 = trans.rotate(recover6, -90)
+        recover7 = trans.rotate(recover7, -180)
+        recover8 = trans.rotate(recover8, -270)
+
+        recover5 = recover5[:, ::-1]
+        recover6 = recover6[:, ::-1]
+        recover7 = recover7[:, ::-1]
+        recover8 = recover8[:, ::-1]
+
+        # combine using avg
+        avg = recover1 + recover2 + recover3 + recover4 + recover5 + recover6 + recover7 + recover8
+        avg = np.divide(avg, norm)
+
+        val = np.where(avg > alpha, 1, 0)
+        val = val * 255
+        io.imsave(os.path.join(output_path_ensembled, nr + ".png"), val)
+
