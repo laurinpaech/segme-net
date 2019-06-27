@@ -53,23 +53,16 @@ tensorboard = TensorBoard(log_dir=log_path, histogram_freq=0,
 submission_flag = args.submission
 nr_of_epochs = args.epochs
 
-if not submission_flag:
-    train_path = "data/roadseg/train"
-    valid_path = "data/roadseg/valid"
-    predict_path = "data/roadseg/valid/image"
-    predict_4to1_path = ""
-    output_path = "data/roadseg/valid/output"
-    temp_path = "data/roadseg/temp"
-    count=10
-else:
-    train_path = "data/roadseg/submit_train"
-    valid_path = "data/roadseg/valid"
-    predict_path = "data/roadseg/submit_test"
-    predict_4to1_path = "data/roadseg/temp_4to1_folder"
-    output_path = "data/roadseg/submit_output"
-    temp_path = "data/roadseg/temp"
-    count=94
-
+train_path = "data/roadseg/submit_train"
+test_predict_path = "data/roadseg/submit_test"
+test_output_path = "data/roadseg/submit_output"
+valid_path = "data/roadseg/valid_gen"
+valid_predict_path = "data/roadseg/valid_gen/image"
+valid_output_path="data/roadseg/valid_gen/output"
+temp_4to1_path = "data/roadseg/temp_4to1_folder"
+temp_path = "data/roadseg/temp"
+valid_count=50
+test_count=94
 
 data_gen_args = dict(rotation_range=args.rotation,
                     width_shift_range=args.width_shift_range,
@@ -80,29 +73,27 @@ data_gen_args = dict(rotation_range=args.rotation,
                     fill_mode=args.fill_mode)
 
 trainGen = trainGenerator(2,train_path,'image', 'label',data_gen_args,save_to_dir = None, nr_of_stacks = args.nr_of_stacks)
-
-if(not submission_flag):
-    validGen = trainGenerator(2,valid_path,'image', 'label',data_gen_args,save_to_dir = None, nr_of_stacks = args.nr_of_stacks)
+validGen = trainGenerator(2,valid_path,'image', 'label',data_gen_args,save_to_dir = None, nr_of_stacks = args.nr_of_stacks)
 
 model = unet(nr_of_stacks=args.nr_of_stacks)
 model_checkpoint_train = ModelCheckpoint(os.path.join(log_path,'unet_roadseg.hdf5'), monitor='val_acc',verbose=1, save_best_only=True)
 model_checkpoint_submit = ModelCheckpoint(os.path.join(log_path,'unet_roadseg.hdf5'), monitor='acc',verbose=1, save_best_only=True)
 
 
-if(not submission_flag):
-    model.fit_generator(trainGen, steps_per_epoch=90, epochs=nr_of_epochs, callbacks=[model_checkpoint_train, tensorboard],
-                        validation_data=validGen, validation_steps=10)
-else:
-    model.fit_generator(trainGen, steps_per_epoch=100, epochs=nr_of_epochs, callbacks=[model_checkpoint_submit, tensorboard])
+model.fit_generator(trainGen, steps_per_epoch=100, epochs=nr_of_epochs, callbacks=[model_checkpoint_train, tensorboard],
+                        validation_data=validGen, validation_steps=valid_count)
 
-# choose prediction type (either resize or 4to1), for valid resize is just normal predictions
-if(args.resize==True or not submission_flag):
-    filenames = os.listdir(predict_path)
-    testGene = testGenerator(predict_path)
+
+# REFACTORED TILL HERE
+
+# choose prediction type (either resize or 4to1)
+if(args.resize==True):
+    filenames = os.listdir(test_predict_path)
+    testGene = testGenerator(test_predict_path)
 else:
-    prepare_4to1data(predict_path, predict_4to1_path)
-    filenames = os.listdir(predict_4to1_path)
-    testGene = testGenerator(predict_4to1_path)
+    prepare_4to1data(test_predict_path, temp_4to1_path)
+    filenames = os.listdir(temp_4to1_path)
+    testGene = testGenerator(temp_4to1_path)
     count = count*4
 
 # load best model from training and predict results
@@ -110,7 +101,7 @@ model.load_weights(os.path.join(log_path,"unet_roadseg.hdf5"))
 results = model.predict_generator(testGene,count,verbose=1)
 post_results = np.where(results > 0.5, 1, 0)
 
-output_path=os.path.join(output_path,args.desc)
+output_path=os.path.join(test_output_path,args.desc)
 os.mkdir(output_path)
 
 
@@ -122,19 +113,16 @@ os.mkdir(output_path_4to1_pre)
 output_path_pre=os.path.join(output_path,"pre_results")
 os.mkdir(output_path_pre)
 
-if(not submission_flag):
-    saveResult(output_path, post_results, filenames, nr_of_stacks = args.nr_of_stacks)
+
+if(args.resize==True):
+    savesubmitResult(temp_path, output_path, post_results, filenames, nr_of_stacks = args.nr_of_stacks)
     saveResultunprocessed(output_path_pre, results, filenames, nr_of_stacks = args.nr_of_stacks)
 else:
-    if(args.resize==True):
-        savesubmitResult(temp_path, output_path, post_results, filenames, nr_of_stacks = args.nr_of_stacks)
-        saveResultunprocessed(output_path_pre, results, filenames, nr_of_stacks = args.nr_of_stacks)
+    savesubmitResult_4to1version(output_path_4to1, post_results, filenames, nr_of_stacks = args.nr_of_stacks)
+    saveResultunprocessed(output_path_4to1_pre, results, filenames, nr_of_stacks = args.nr_of_stacks)
+    if(args.combine_max==True):
+        print("combining image using max")
+        postprocess_4to1data_max(predict_path, output_path_4to1, output_path)
     else:
-        savesubmitResult_4to1version(output_path_4to1, post_results, filenames, nr_of_stacks = args.nr_of_stacks)
-        saveResultunprocessed(output_path_4to1_pre, results, filenames, nr_of_stacks = args.nr_of_stacks)
-        if(args.combine_max==True):
-            print("combining image using max")
-            postprocess_4to1data_max(predict_path, output_path_4to1, output_path)
-        else:
-            print("combining image using average")
-            postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path)
+        print("combining image using average")
+        postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path)
