@@ -90,12 +90,11 @@ data_gen_args = dict(rotation_range=args.rotation,
                     fill_mode=args.fill_mode,
                     channel_shift_range=args.channel_shift_range)
 
-trainGen = trainGenerator(2,train_path,'image', 'label',data_gen_args,save_to_dir = None, nr_of_stacks = args.nr_of_stacks)
-validGen = trainGenerator(2,valid_path,'image', 'label',data_gen_args,save_to_dir = None, nr_of_stacks = args.nr_of_stacks)
+trainGen = trainGenerator(args.batch_size ,train_path,'image', 'label',data_gen_args,save_to_dir = None, nr_of_stacks = args.nr_of_stacks)
+validGen = trainGenerator(args.batch_size ,valid_path,'image', 'label',data_gen_args,save_to_dir = None, nr_of_stacks = args.nr_of_stacks)
 
 model = unet(nr_of_stacks=args.nr_of_stacks)
 model_checkpoint_train = ModelCheckpoint(os.path.join(log_path,'unet_roadseg.hdf5'), monitor='val_kaggle_metric',verbose=1, save_best_only=True)
-#model_checkpoint_submit = ModelCheckpoint(os.path.join(log_path,'unet_roadseg.hdf5'), monitor='acc',verbose=1, save_best_only=True)
 
 
 model.fit_generator(trainGen, steps_per_epoch=100, epochs=nr_of_epochs, callbacks=[model_checkpoint_train, tensorboard],
