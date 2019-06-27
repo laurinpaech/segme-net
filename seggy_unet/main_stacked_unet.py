@@ -7,39 +7,46 @@ import argparse
 
 # this part is used for argument handling
 parser = argparse.ArgumentParser()
-parser.add_argument('--desc', type=str,
+parser.add_argument('--desc', type=str, default = 'stacked_unet_default_desc',
                     help='How to name this run, defines folder in logs dir, only use "a-z,A-Z,1-9,_" pls')
-parser.add_argument('--epochs', type=int,
+parser.add_argument('--epochs', type=int, default = 300,
                     help='Number of epochs to run')
-parser.add_argument('--submission', type=bool,
+parser.add_argument('--submission', type=bool, default = True,
                     help='to create submission or not')
-parser.add_argument('--rotation', type=int,
+parser.add_argument('--rotation', type=int, default = 360,
                     help='rotation perturbation in degrees')
-parser.add_argument('--width_shift_range', type=float,
+parser.add_argument('--width_shift_range', type=float, default = 50,
                     help='width_shift_range')
-parser.add_argument('--height_shift_range', type=float,
+parser.add_argument('--height_shift_range', type=float, default = 50,
                     help='height_shift_range')
-parser.add_argument('--shear_range', type=float,
+parser.add_argument('--shear_range', type=float, default = 0,
                     help='shear_range')
-parser.add_argument('--zoom_range', type=float,
+parser.add_argument('--zoom_range', type=float, default = 0,
                     help='zoom_range')
-parser.add_argument('--horizontal_flip', type=bool,
+parser.add_argument('--horizontal_flip', type=bool, default = True,
                     help='horizontal_flip: True or False')
-parser.add_argument('--fill_mode', type=str,
+parser.add_argument('--vertical_flip', type=bool, default = True,
+                    help='vertical_flip: True or False')
+parser.add_argument('--fill_mode', type=str, default = 'reflect',
                     help='points outside the boundaries of the input are filled according to the given mode, '
                          'standard is nearest')
-parser.add_argument('--resize', type=bool,
+parser.add_argument('--resize', type=bool, default = True,
                     help='either resizes submission images or uses splits image into 4 subimages to make predictions' )
-parser.add_argument('--combine_max', type=bool,
+parser.add_argument('--combine_max', type=bool, default = False,
                     help='if split image into 4 subimage, can combine using max (True), or using average (False, default)' )
-parser.add_argument('--nr_of_stacks', type=int,
+parser.add_argument('--nr_of_stacks', type=int, default = 2,
                     help='points outside the boundaries of the input are filled according to the given mode, '
                          'standard is nearest')
-parser.add_argument('--ensemble', type=bool, help='predict 8 versions of image with rotations and flipping, and recombine them later')
-
+parser.add_argument('--ensemble', type=bool, default = True,
+                    help='predict 8 versions of image with rotations and flipping, and recombine them later')
+parser.add_argument('--channel_shift_range', type=float, default = 0,
+                    help='random channel_shift_range in [-input,input]')
+parser.add_argument('--batch_size', type=int, default = 2,
+                    help='Batch size for training (default: 2) ' )
 
 
 args = parser.parse_args()
+print(args)
 # end of argument handling
 
 
@@ -49,7 +56,7 @@ tensorboard = TensorBoard(log_dir=log_path, histogram_freq=0,
 
 #os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-
+### Initial/Default parameter if none are passed
 
 submission_flag = args.submission
 nr_of_epochs = args.epochs
@@ -73,7 +80,9 @@ data_gen_args = dict(rotation_range=args.rotation,
                     shear_range=args.shear_range,
                     zoom_range=args.zoom_range,
                     horizontal_flip=args.horizontal_flip,
-                    fill_mode=args.fill_mode)
+                    vertical_flip=args.vertical_flip,
+                    fill_mode=args.fill_mode,
+                    channel_shift_range=args.channel_shift_range)
 
 trainGen = trainGenerator(2,train_path,'image', 'label',data_gen_args,save_to_dir = None, nr_of_stacks = args.nr_of_stacks)
 validGen = trainGenerator(2,valid_path,'image', 'label',data_gen_args,save_to_dir = None, nr_of_stacks = args.nr_of_stacks)
