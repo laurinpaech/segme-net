@@ -16,13 +16,13 @@ parser.add_argument('--submission', type=bool, default = True,
 parser.add_argument('--rotation', type=int, default = 360,
                     help='rotation perturbation in degrees')
 parser.add_argument('--width_shift_range', type=float, default = 50,
-                    help='width_shift_range')
+                    help='width_shift_range between 0 and 255')
 parser.add_argument('--height_shift_range', type=float, default = 50,
-                    help='height_shift_range')
+                    help='height_shift_range between 0 and 255')
 parser.add_argument('--shear_range', type=float, default = 0,
-                    help='shear_range')
+                    help='shear_range between 0 and 255')
 parser.add_argument('--zoom_range', type=float, default = 0,
-                    help='zoom_range')
+                    help='zoom_range BETWEEN 0 AND 1')
 parser.add_argument('--horizontal_flip', type=bool, default = True,
                     help='horizontal_flip: True or False')
 parser.add_argument('--vertical_flip', type=bool, default = True,

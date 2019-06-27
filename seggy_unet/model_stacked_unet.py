@@ -102,7 +102,7 @@ def unet(pretrained_weights = None,input_size = (None,None,3), nr_of_stacks = 1)
 
     model = Model(input = inputs, output = combined_output)
 
-    #rmsprob = RMSprop(lr=1e-4)  
+    #rmsprob = RMSprop(lr=1e-4)
     model.compile(optimizer = Adam(lr = 1e-4), loss = 'binary_crossentropy', metrics = ['accuracy', grid_loss, kaggle_metric])
     
     #model.summary()
