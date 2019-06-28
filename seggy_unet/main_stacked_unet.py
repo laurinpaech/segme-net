@@ -97,7 +97,7 @@ model = unet(nr_of_stacks=args.nr_of_stacks)
 model_checkpoint_train = ModelCheckpoint(os.path.join(log_path,'unet_roadseg.hdf5'), monitor='val_kaggle_metric',verbose=1, save_best_only=True)
 
 
-model.fit_generator(trainGen, steps_per_epoch=100, epochs=nr_of_epochs, callbacks=[model_checkpoint_train, tensorboard],
+model.fit_generator(trainGen, steps_per_epoch=50, epochs=nr_of_epochs, callbacks=[model_checkpoint_train, tensorboard],
                         validation_data=validGen, validation_steps=valid_count)
 
 
