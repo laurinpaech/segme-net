@@ -77,7 +77,7 @@ valid_output_path="data/roadseg/valid_gen/output"
 temp_4to1_path = "data/roadseg/temp_4to1_folder"
 temp_path = "data/roadseg/temp"
 temp_ensemble_path = "data/roadseg/temp_ensemble"
-valid_count=50
+valid_count=101
 test_count=94
 
 data_gen_args = dict(rotation_range=args.rotation,
@@ -91,7 +91,7 @@ data_gen_args = dict(rotation_range=args.rotation,
                     channel_shift_range=args.channel_shift_range)
 
 trainGen = trainGenerator(args.batch_size ,train_path,'image', 'label',data_gen_args,save_to_dir = None, nr_of_stacks = args.nr_of_stacks)
-validGen = trainGenerator(args.batch_size ,valid_path,'image', 'label',data_gen_args,save_to_dir = None, nr_of_stacks = args.nr_of_stacks)
+validGen = trainGenerator(1 ,valid_path,'image', 'label',data_gen_args,save_to_dir = None, nr_of_stacks = args.nr_of_stacks)
 
 model = unet(nr_of_stacks=args.nr_of_stacks)
 model_checkpoint_train = ModelCheckpoint(os.path.join(log_path,'unet_roadseg.hdf5'), monitor='val_kaggle_metric',verbose=1, save_best_only=True)
