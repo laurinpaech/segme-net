@@ -20,5 +20,5 @@ def kaggle_metric(y_true, y_pred):
     y_pred_reduced = tf.where(y_pred_reduced > 3, tf.ones(tf.shape(y_true_reduced)), tf.zeros(tf.shape(y_true_reduced)))
 
     # only use results from last unet
-    return tf.losses.mean_squared_error(y_true_reduced[:,:,:,:,tf.shape(y_true_reduced)[4]-1],y_pred_reduced[:,:,:,:,tf.shape(y_true_reduced)[4]-1])
+    return tf.losses.mean_squared_error(y_true_reduced[:,:,:,tf.shape(y_true_reduced)[3]-1],y_pred_reduced[:,:,:,tf.shape(y_true_reduced)[3]-1])
 
