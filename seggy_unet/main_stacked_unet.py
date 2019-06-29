@@ -3,7 +3,7 @@ from data_stacked_unet import *
 import os
 from keras.callbacks import TensorBoard
 import argparse
-
+from custom_losses import *
 
 # this part is used for argument handling
 parser = argparse.ArgumentParser()
@@ -94,7 +94,7 @@ trainGen = trainGenerator(args.batch_size ,train_path,'image', 'label',data_gen_
 validGen = trainGenerator(1 ,valid_path,'image', 'label',data_gen_args,save_to_dir = None, nr_of_stacks = args.nr_of_stacks)
 
 model = unet(nr_of_stacks=args.nr_of_stacks)
-model_checkpoint_train = ModelCheckpoint(os.path.join(log_path,'unet_roadseg.hdf5'), monitor='val_kaggle_metric',verbose=1, save_best_only=True)
+model_checkpoint_train = ModelCheckpoint(os.path.join(log_path,'unet_roadseg.hdf5'), monitor='real_kaggle_metric_035',verbose=1, save_best_only=True)
 
 
 model.fit_generator(trainGen, steps_per_epoch=50, epochs=nr_of_epochs, callbacks=[model_checkpoint_train, tensorboard],
