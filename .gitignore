@@ -4,6 +4,8 @@ __pycache__/
 *.ipynb
 .ipynb_checkpoints/
 logs/
-data/roadseg/temp_4to1_folder/
-data/roadseg/valid/output/
-data/roadseg/submit_output/
+data/temp_4to1_folder/
+data/temp/
+data/temp_ensemble/
+data/valid/output/
+data/submit_output/
