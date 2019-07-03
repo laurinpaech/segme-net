@@ -1,4 +1,4 @@
-from data_loader.data_stacked_unet import *
+from data_loader.data import *
 from keras.callbacks import TensorBoard
 import argparse
 import skimage.io as io
@@ -24,9 +24,9 @@ print(args)
 
 # load correct unet model
 if(args.leakyRelu):
-    from model.model_stacked_unet_leaky import *
+    from model.stacked_unet_leaky import *
 else:
-    from model.model_stacked_unet import *
+    from model.stacked_unet import *
 
 
 log_path=os.path.join("./logs/",args.desc)

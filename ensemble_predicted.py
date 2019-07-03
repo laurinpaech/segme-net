@@ -1,4 +1,4 @@
-from data_loader.data_stacked_unet import *
+from data_loader.data import *
 import argparse
 import os
 

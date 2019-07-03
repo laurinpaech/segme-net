@@ -5,6 +5,8 @@ import os
 import glob
 import skimage.io as io
 import skimage.transform as trans
+from skimage import filters
+import pywt
 
 Road = [255, 255, 255]
 Unlabelled = [0, 0, 0]
@@ -12,17 +14,74 @@ Unlabelled = [0, 0, 0]
 COLOR_DICT = np.array([Road, Unlabelled])
 
 
+def wavelets(imgs):
+    # Convert image to greyscale
+    L1s = []
+    L2s = []
+    L3s = []
+
+    for i, img in enumerate(imgs):  # imgs: (batch_size, *target_size, channels)`
+        grey = np.dot(img[..., :3], [0.299, 0.587, 0.114])
+        # Wavelet decomposition
+        _, L3, L2, L1 = pywt.wavedec2(grey, 'db1', level=3)  # shape: (25, 25), (50, 50), (100, 100), (200, 200)
+        L1s.append(np.array(L1))
+        L2s.append(np.array(L2))
+        L3s.append(np.array(L3))
+
+    # stack and switch axis to get output shape of (2, H, W, 3)
+    L1 = np.stack(L1s)
+    L1 = np.moveaxis(L1, 1, 3)
+
+    L2 = np.stack(L2s)
+    L2 = np.moveaxis(L2, 1, 3)
+
+    L3 = np.stack(L3s)
+    L3 = np.moveaxis(L3, 1, 3)
+
+    return L1, L2, L3
+
+
+def get_laplace(imgs):
+    laplace_2arr = []
+    laplace_4arr = []
+    laplace_8arr = []
+
+    for i, img in enumerate(imgs):  # imgs: (batch_size, *target_size, channels)`
+        grey = np.dot(img[..., :3], [0.299, 0.587, 0.114])
+        laplace_org = filters.laplace(grey)
+
+        # resize to h/2, h/4, h/8
+        laplace_2 = trans.resize(laplace_org, (200, 200))
+        laplace_4 = trans.resize(laplace_org, (100, 100))
+        laplace_8 = trans.resize(laplace_org, (50, 50))
+
+        laplace_2arr.append(laplace_2)
+        laplace_4arr.append(laplace_4)
+        laplace_8arr.append(laplace_8)
+
+    laplace_2arr = np.stack(laplace_2arr)
+    laplace_2arr = np.expand_dims(laplace_2arr, axis=3)
+
+    laplace_4arr = np.stack(laplace_4arr)
+    laplace_4arr = np.expand_dims(laplace_4arr, axis=3)
+
+    laplace_8arr = np.stack(laplace_8arr)
+    laplace_8arr = np.expand_dims(laplace_8arr, axis=3)
+
+    return laplace_2arr, laplace_4arr, laplace_8arr
+
+
 def adjustData(img, mask, num_class):
     img = img / 255
     mask = mask / 255
     mask[mask > 0.5] = 1
     mask[mask <= 0.5] = 0
-    return (img, mask)
+    return img, mask
 
 
 def trainGenerator(batch_size, train_path, image_folder, mask_folder, aug_dict, image_color_mode="rgb",
                    mask_color_mode="grayscale", image_save_prefix="image", mask_save_prefix="mask",
-                   num_class=2, save_to_dir=None, target_size=(400, 400), seed=1, nr_of_stacks=1):
+                   num_class=2, save_to_dir=None, target_size=(400, 400), seed=1, nr_of_stacks=1, use_wavelet=False):
     '''
     can generate image and mask at the same time
     use the same seed for image_datagen and mask_datagen to ensure the transformation for image and mask is the same
@@ -52,16 +111,52 @@ def trainGenerator(batch_size, train_path, image_folder, mask_folder, aug_dict, 
         seed=seed)
     train_generator = zip(image_generator, mask_generator)
     for (img, mask) in train_generator:
-        img, mask = adjustData(img, mask, num_class)
-        yield (img, np.repeat(mask, nr_of_stacks, axis=3))
+        img, mask = adjustData(img, mask, num_class)  # img: `(batch_size, *target_size, channels)`
+
+        inputs = img
+
+        if use_wavelet:
+            # get wavelet decomposition
+            L1, L2, L3 = wavelets(img)
+
+            # get sobel filtered image
+            laplace_2, laplace_4, laplace_8 = get_laplace(img)
+
+            # inputs = [img, L1, L2, L3]  # wavelets only (1 stack)
+            # inputs = [img, L1, laplace_2, L2, laplace_4, L3, laplace_8]  # wavelet + laplace (1 stack)
+
+            # wavelet + laplace (2 stacks)
+            inputs = [img, L1, laplace_2, L2, laplace_4, L3, laplace_8, L1, laplace_2, L2, laplace_4, L3, laplace_8]
+
+        yield (inputs, np.repeat(mask, nr_of_stacks, axis=3))
 
 
-def testGenerator(test_path, target_size=(400, 400)):
+def testGenerator(test_path, target_size=(400, 400), use_wavelet=False):
+    """
+    create generator for test data.
+    Using resizing from 608x608 to 400x400, since network is trained on 400x400, and test is 608x608x
+    """
     for filename in os.listdir(test_path):
         img = io.imread(os.path.join(test_path, filename))
         img = trans.resize(img, target_size)
         img = np.reshape(img, (1,) + img.shape)
-        yield img
+
+        inputs = img
+
+        if use_wavelet:
+            # get wavelet decomposition
+            L1, L2, L3 = wavelets(img)
+
+            # get sobel filtered image
+            laplace_2, laplace_4, laplace_8 = get_laplace(img)
+
+            # inputs = [img, L1, L2, L3]  # wavelets only (1 stack)
+            # inputs = [img, L1, laplace_2, L2, laplace_4, L3, laplace_8]  # wavelet + laplace (1 stack)
+
+            # wavelet + laplace (2 stacks)
+            inputs = [img, L1, laplace_2, L2, laplace_4, L3, laplace_8, L1, laplace_2, L2, laplace_4, L3, laplace_8]
+
+        yield inputs
 
 
 def prepare_4to1data(predict_path, predict_4to1_path):
@@ -142,6 +237,7 @@ def postprocess_4to1data_avg(predict_path, output_path_4to1_pre, output_path, al
 
 def geneTrainNpy(image_path, mask_path, num_class=2, image_prefix="image", mask_prefix="mask", image_as_gray=True,
                  mask_as_gray=True):
+    """ probably not used, legacy"""
     image_name_arr = glob.glob(os.path.join(image_path, "%s*.png" % image_prefix))
     image_arr = []
     mask_arr = []
@@ -159,6 +255,7 @@ def geneTrainNpy(image_path, mask_path, num_class=2, image_prefix="image", mask_
 
 
 def labelVisualize(num_class, color_dict, img):
+    """ probably not used, legacy"""
     img = img[:, :, 0] if len(img.shape) == 3 else img
     img_out = np.zeros(img.shape + (3,))
     for i in range(num_class):
@@ -167,6 +264,8 @@ def labelVisualize(num_class, color_dict, img):
 
 
 def saveResultunprocessed(save_path, npyfile, filenames, nr_of_stacks):
+    """ saver for predictions without probablity cutoff"""
+    print("Saving unprocessed results inside: ", save_path)
     for i, item in enumerate(npyfile):
         for n in range(nr_of_stacks):
             img = item[:, :, n]
@@ -175,12 +274,19 @@ def saveResultunprocessed(save_path, npyfile, filenames, nr_of_stacks):
 
 
 def saveResult(save_path, npyfile, filenames, nr_of_stacks):
+    """ saver for predictions with probablity cutoff used"""
+    print("Saving results inside: ", save_path)
     for i, item in enumerate(npyfile):
         img = item[:, :, nr_of_stacks - 1] * 255
         io.imsave(os.path.join(save_path, filenames[i]), img)
 
 
 def savesubmitResult(temp_path, save_path, npyfile, filenames, nr_of_stacks):
+    """ Output of test data should be 608x608. Network output is 400x400.
+        We resize output from 400x400 to 608x608
+    """
+    print("Saving submission results inside: ", save_path)
+    print("Using temp path to resize the images before saving: " + temp_path)
     for i, item in enumerate(npyfile):
         img = item[:, :, nr_of_stacks - 1]
         img = img * 255
@@ -191,6 +297,9 @@ def savesubmitResult(temp_path, save_path, npyfile, filenames, nr_of_stacks):
 
 
 def savesubmitResult_4to1version(save_path, npyfile, filenames, nr_of_stacks):
+    """
+        In main-cil 4 test output predictions have already been combined, thus here just saving of the result.
+    """
     for i, item in enumerate(npyfile):
         img = item[:, :, nr_of_stacks - 1]
         img = img * 255

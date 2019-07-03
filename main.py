@@ -1,4 +1,4 @@
-from data_loader.data_stacked_unet import *
+from data_loader.data import *
 from keras.callbacks import TensorBoard, ModelCheckpoint
 import argparse
 
@@ -40,6 +40,8 @@ parser.add_argument('--batch_size', type=int, default=2,
                     help='Batch size for training (default: 2) ')
 parser.add_argument('--leakyRelu', default=False, action='store_true',
                     help='choose if unet should use leaky Relu')
+parser.add_argument('--wavelet', default=False, action='store_true',
+                    help='choose if unet should use wavelet inputs')
 parser.add_argument('--gpu', type=int, default=-1,
                     help='choose which gpu to use')
 
@@ -56,9 +58,9 @@ ensemble = args.ensemble
 
 # load correct unet model
 if args.leakyRelu:
-    from model.model_stacked_unet_leaky import *
+    from model.stacked_unet_leaky import *
 else:
-    from model.model_stacked_unet import *
+    from model.stacked_unet import *
 
 
 # set logging
@@ -92,11 +94,14 @@ data_gen_args = dict(rotation_range=args.rotation,
                      channel_shift_range=args.channel_shift_range)
 
 trainGen = trainGenerator(args.batch_size, train_path, 'image', 'label', data_gen_args, save_to_dir=None,
-                          nr_of_stacks=args.nr_of_stacks)
+                          nr_of_stacks=args.nr_of_stacks, use_wavelet=args.wavelets)
 validGen = trainGenerator(1, valid_path, 'image', 'label', data_gen_args, save_to_dir=None,
-                          nr_of_stacks=args.nr_of_stacks)
+                          nr_of_stacks=args.nr_of_stacks, use_wavelet=args.wavelets)
 
+# Initialize model
 model = unet(nr_of_stacks=args.nr_of_stacks)
+
+
 model_checkpoint_train = ModelCheckpoint(os.path.join(log_path, 'unet_roadseg.hdf5'), monitor='real_kaggle_metric_035',
                                          verbose=1, save_best_only=True)
 # model_checkpoint_train = ModelCheckpoint(os.path.join(log_path, 'unet_roadseg_{epoch:04d}.hdf5'), monitor='val_acc',
@@ -116,10 +121,10 @@ if args.resize:
         test_count = test_count * 8
         prepare_ensemble(test_predict_path, temp_ensemble_path)
         filenames = os.listdir(temp_ensemble_path)
-        testGene = testGenerator(temp_ensemble_path)
+        testGene = testGenerator(temp_ensemble_path, use_wavelet=args.wavelets)
     else:
         filenames = os.listdir(test_predict_path)
-        testGene = testGenerator(test_predict_path)
+        testGene = testGenerator(test_predict_path, use_wavelet=args.wavelets)
 else:
     if ensemble:
         raise Exception("ENSEMBLE WITH 4TO1 CURRENTLY NOT SUPPORTED")
