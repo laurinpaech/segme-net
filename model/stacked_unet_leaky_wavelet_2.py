@@ -190,7 +190,7 @@ def unet(pretrained_weights=None, input_size=(None, None, 3), nr_of_stacks=1):
     model = Model(input=[inputs, L1, laplace_2, L2, laplace_4, L3, laplace_8,
                          L1_2, laplace_2_2, L2_2, laplace_4_2, L3_2, laplace_8_2], output=combined_output)
 
-    model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy', grid_loss, real_kaggle_metric_035])
+    model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy', grid_loss, kaggle_metric])
 
     # model.summary()
 

@@ -42,6 +42,8 @@ parser.add_argument('--leakyRelu', default=False, action='store_true',
                     help='choose if unet should use leaky Relu')
 parser.add_argument('--wavelet', default=False, action='store_true',
                     help='choose if unet should use wavelet inputs')
+parser.add_argument('--wavelet_both', default=False, action='store_true',
+                    help='choose if unet should use wavelet inputs only in first, or more stacks')
 parser.add_argument('--gpu', type=int, default=-1,
                     help='choose which gpu to use')
 
@@ -58,7 +60,13 @@ ensemble = args.ensemble
 
 # load correct unet model
 if args.leakyRelu:
-    from model.stacked_unet_leaky import *
+    if args.wavelet:
+        if args.wavelet_both:
+            from model.stacked_unet_leaky_wavelet import *
+        else:
+            from model.stacked_unet_leaky_wavelet_2 import *
+    else:
+        from model.stacked_unet_leaky import *
 else:
     from model.stacked_unet import *
 
@@ -102,10 +110,8 @@ validGen = trainGenerator(1, valid_path, 'image', 'label', data_gen_args, save_t
 model = unet(nr_of_stacks=args.nr_of_stacks)
 
 
-model_checkpoint_train = ModelCheckpoint(os.path.join(log_path, 'unet_roadseg.hdf5'), monitor='real_kaggle_metric_035',
+model_checkpoint_train = ModelCheckpoint(os.path.join(log_path, 'unet_roadseg.hdf5'), monitor='kaggle_metric',
                                          verbose=1, save_best_only=True)
-# model_checkpoint_train = ModelCheckpoint(os.path.join(log_path, 'unet_roadseg_{epoch:04d}.hdf5'), monitor='val_acc',
-#                                          verbose=1, period=50)
 
 model.fit_generator(trainGen, steps_per_epoch=50, epochs=nr_of_epochs, callbacks=[model_checkpoint_train, tensorboard],
                     validation_data=validGen, validation_steps=valid_count)

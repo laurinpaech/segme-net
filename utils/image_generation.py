@@ -13,23 +13,23 @@ VALID_DIR = './valid/'
 
 # set paths
 CENTER_DIR = VALID_DIR + 'center/'
-CENTER_GT_DIR = CENTER_DIR + 'groundtruth/'
+CENTER_GT_DIR = CENTER_DIR + 'label/'
 CENTER_IMG_DIR = CENTER_DIR + 'images/'
 
 UR_DIR = VALID_DIR + 'up_right/'
-UR_GT_DIR = UR_DIR + 'groundtruth/'
+UR_GT_DIR = UR_DIR + 'label/'
 UR_IMG_DIR = UR_DIR + 'images/'
 
 UL_DIR = VALID_DIR + 'up_left/'
-UL_GT_DIR = UL_DIR + 'groundtruth/'
+UL_GT_DIR = UL_DIR + 'label/'
 UL_IMG_DIR = UL_DIR + 'images/'
 
 BR_DIR = VALID_DIR + 'bottom_right/'
-BR_GT_DIR = BR_DIR + 'groundtruth/'
+BR_GT_DIR = BR_DIR + 'label/'
 BR_IMG_DIR = BR_DIR + 'images/'
 
 BL_DIR = VALID_DIR + 'bottom_left/'
-BL_GT_DIR = BL_DIR + 'groundtruth/'
+BL_GT_DIR = BL_DIR + 'label/'
 BL_IMG_DIR = BL_DIR + 'images/'
 
 # create valid path
