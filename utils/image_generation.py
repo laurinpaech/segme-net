@@ -2,8 +2,17 @@ import numpy as np
 import os
 from PIL import Image
 
-# Image sizes
-# 3328 × 2560
+"""
+This file is used to generate images from the chicago (and other) dataset from the paper:
+'Learning Aerial Image Segmentation from Online Maps'
+https://arxiv.org/abs/1707.06879
+
+Image sizes: 3328 × 2560
+We take a patch and resize it to be as close as possible to the resolution of our original training data
+(which are the patches of the upper left corner of image 1-109 in the chicago dataset)
+
+Test images (even as patches) couldn't be found in the dataset.
+"""
 
 # Image path
 IMAGE_DIR = './chicago/'

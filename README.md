@@ -1,44 +1,61 @@
 # segme-net
 Road Segmentation Project for Computational Intelligence Lab 2019
 
+
+## Getting started
+
+Use python 3.6 and run the follwoing command:
+```
+pip install -r requirements.txt
+```
+
 ## Folder structure
-
-data
-- test
-- 100 training
-- validation_gen?
-- 600 training
-- 10k training
-
-
 
 ```
 ├──  data
-│   ├── roadseg
-|   |       ├── submit_test
-|   |       ├── submit_train
-|   |       ├── train
-|   |       └── valid
-|   |   
-│   |── test_images                 - all test images given for the project
 |   |
-|   └── training                    - all training images (groundtruth labels and images) given for the project
+|   |── train                       - all 100 training images given for the project
+|   |
+|   |── valid                       - validation images generated from chicago dataset
+|   |   
+│   |── test                        - all test images given for the project
+|   |
+|   |── train_600                   - training images + additional 600 generated images
+|   |
+|   └── train_10k                       - training images + additional 10000 generated images
 │
 │
-├── model                           - this folder contains any model of our project.
-│   └── unet.py                     - keras implementation of unet
+├── model                               - this folder contains any model of our project.
+|   |
+|   |── stacked_unet.py                     - keras implementation of stacked unet
+|   |
+|   |── stacked_unet_leaky.py               - keras implementation of stacked unet + leaky relu
+|   |
+|   |── stacked_unet_leaky_wavelet.py       - keras implementation of stacked unet + leaky relu + wavelets
+|   |
+│   └── stacked_unet_leaky_wavelet_2.py     - keras implementation of stacked unet + leaky relu + wavelets
 │
 │
-├──  main.py                        - main that is responsible for the whole pipeline. (formerly main_cil.py)
+├── main.py                        - main that is responsible for the whole pipeline
 │ 
 │  
-├──  data _loader  
-│    └── data_generator.py          - data_generator that is responsible for all data handling (formerly data_cil.py)
+├── data _loader
+|   | 
+│   └── data.py                 - data generator that is responsible for all data handling
 │ 
 └── utils
+     |
+     ├── alpha_testing.py           - used for testing best cut-off value for our predictions
+     |
+     ├── custom_losses.py
+     |
+     ├── hough_transform.py
+     |
      ├── mask_to_submission.py
+     |
      ├── submission_to_mask.py
-     └── sample_submission.csv
+     |
+     └── image_generation.py        - used for generation additional images as data
 ```
 
 ## Implementation of U-Net, using Keras
@@ -51,14 +68,6 @@ The architecture was inspired by [U-Net: Convolutional Networks for Biomedical I
 - does perturbation of images during runtime, perturbations are currently defined in main in data_gen_args. 
 - It's fast, maybe 1-2min per epoch
 - i manually split the training data into train and valid (90 images/ 10 images). In submission mode, uses all 100 images for training
-
-#### stuff to test/explore
-
-- how they calculate loss on kaggle, and maybe write a loss which is similar
-- weighted loss, i.e. roads are valued higher in loss
-- leaky relu (might help)
-- changes on a model level, haven't tested anything
-- impact of perturbations, what helps, what doesn't
 
 ### How to use
 
@@ -95,21 +104,6 @@ log folder contains tensorboard files, download to own machine and look at with
 3. predictions in data/roadseg/submit_output/
 4. copy mask_to_submission.py to output folder, switch to folder and run
 5. next_submission.csv in folder can now be uploaded to kaggle
-
-## Overview Files
-
-#### main_cil
-
-run everything from here, including switch between training and submission
-must parameters can be changed here using basic keras features.
-
-#### data_cil
-
-a couple helper functions, in general don't have to be touched
-
-#### model_cil
-
-i haven't touched this, literally a copy from the git-code i copied.
 
 ## Results
 
