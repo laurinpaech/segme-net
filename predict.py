@@ -17,6 +17,10 @@ parser.add_argument('--ensemble', default=False, action='store_true',
                     help='predict 8 versions of image with rotations and flipping, and recombine them later')
 parser.add_argument('--leakyRelu', default=False, action='store_true',
                     help='choose if unet should use leaky Relu')
+parser.add_argument('--wavelet', default=False, action='store_true',
+                    help='choose if unet should use wavelet inputs')
+parser.add_argument('--wavelet_both', default=False, action='store_true',
+                    help='choose if unet should use wavelet inputs only in first, or more stacks')
 parser.add_argument('--gpu', type=int, default=-1,
                     help='choose which gpu to use')
 
@@ -29,10 +33,18 @@ if args.gpu != -1:
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
 ensemble = args.ensemble
+use_wavelet = args.wavelet
+use_wavelet_both = args.wavelet_both
 
 # load correct unet model
 if args.leakyRelu:
-    from model.stacked_unet_leaky import *
+    if use_wavelet:
+        if use_wavelet_both:
+            from model.stacked_unet_leaky_wavelet_2 import *
+        else:
+            from model.stacked_unet_leaky_wavelet import *
+    else:
+        from model.stacked_unet_leaky import *
 else:
     from model.stacked_unet import *
 
@@ -67,10 +79,10 @@ if args.resize:
         test_count = test_count * 8
         prepare_ensemble(test_predict_path, temp_ensemble_path)
         filenames = os.listdir(temp_ensemble_path)
-        testGene = testGenerator(temp_ensemble_path)
+        testGene = testGenerator(temp_ensemble_path, use_wavelet=use_wavelet, use_wavelet_both=use_wavelet_both)
     else:
         filenames = os.listdir(test_predict_path)
-        testGene = testGenerator(test_predict_path)
+        testGene = testGenerator(test_predict_path, use_wavelet=use_wavelet, use_wavelet_both=use_wavelet_both)
 else:
     if ensemble:
         raise Exception("ENSEMBLE WITH 4TO1 CURRENTLY NOT SUPPORTED")

@@ -2,13 +2,6 @@
 Road Segmentation Project for Computational Intelligence Lab 2019
 
 
-## Getting started
-
-Use python 3.6 and run the follwoing command:
-```
-pip install -r requirements.txt
-```
-
 ## Folder structure
 
 ```
@@ -58,20 +51,20 @@ pip install -r requirements.txt
      └── image_generation.py        - used for generation additional images as data
 ```
 
-## Implementation of U-Net, using Keras
+## Getting started
+
+Use python 3.6 and run the follwoing command:
+```
+pip install -r requirements.txt
+```
+
+## Stacked U-Net, using Keras
 
 The architecture was inspired by [U-Net: Convolutional Networks for Biomedical Image Segmentation](http://lmb.informatik.uni-freiburg.de/people/ronneber/u-net/).
 
-
-### Intro
-
-- does perturbation of images during runtime, perturbations are currently defined in main in data_gen_args. 
-- It's fast, maybe 1-2min per epoch
-- i manually split the training data into train and valid (90 images/ 10 images). In submission mode, uses all 100 images for training
-
 ### How to use
 
-#### How to train a model
+#### Running a model
 Notes:
 -   sometimes gets stuck from beginning on a loss of ~0.6, then you got to restart
 
@@ -105,5 +98,10 @@ log folder contains tensorboard files, download to own machine and look at with
 4. copy mask_to_submission.py to output folder, switch to folder and run
 5. next_submission.csv in folder can now be uploaded to kaggle
 
+#### Reproducing Kaggle results
+
+TODO
+
 ## Results
 
+TODO

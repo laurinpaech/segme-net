@@ -81,7 +81,8 @@ def adjustData(img, mask, num_class):
 
 def trainGenerator(batch_size, train_path, image_folder, mask_folder, aug_dict, image_color_mode="rgb",
                    mask_color_mode="grayscale", image_save_prefix="image", mask_save_prefix="mask",
-                   num_class=2, save_to_dir=None, target_size=(400, 400), seed=1, nr_of_stacks=1, use_wavelet=False):
+                   num_class=2, save_to_dir=None, target_size=(400, 400), seed=1, nr_of_stacks=1, use_wavelet=False,
+                   use_wavelet_both=False):
     '''
     can generate image and mask at the same time
     use the same seed for image_datagen and mask_datagen to ensure the transformation for image and mask is the same
@@ -123,15 +124,17 @@ def trainGenerator(batch_size, train_path, image_folder, mask_folder, aug_dict, 
             laplace_2, laplace_4, laplace_8 = get_laplace(img)
 
             # inputs = [img, L1, L2, L3]  # wavelets only (1 stack)
-            # inputs = [img, L1, laplace_2, L2, laplace_4, L3, laplace_8]  # wavelet + laplace (1 stack)
 
-            # wavelet + laplace (2 stacks)
-            inputs = [img, L1, laplace_2, L2, laplace_4, L3, laplace_8, L1, laplace_2, L2, laplace_4, L3, laplace_8]
+            if use_wavelet_both:
+                # wavelet + laplace (2 stacks)
+                inputs = [img, L1, laplace_2, L2, laplace_4, L3, laplace_8, L1, laplace_2, L2, laplace_4, L3, laplace_8]
+            else:
+                inputs = [img, L1, laplace_2, L2, laplace_4, L3, laplace_8]  # wavelet + laplace (1 stack)
 
         yield (inputs, np.repeat(mask, nr_of_stacks, axis=3))
 
 
-def testGenerator(test_path, target_size=(400, 400), use_wavelet=False):
+def testGenerator(test_path, target_size=(400, 400), use_wavelet=False, use_wavelet_both=False):
     """
     create generator for test data.
     Using resizing from 608x608 to 400x400, since network is trained on 400x400, and test is 608x608x
@@ -153,8 +156,11 @@ def testGenerator(test_path, target_size=(400, 400), use_wavelet=False):
             # inputs = [img, L1, L2, L3]  # wavelets only (1 stack)
             # inputs = [img, L1, laplace_2, L2, laplace_4, L3, laplace_8]  # wavelet + laplace (1 stack)
 
-            # wavelet + laplace (2 stacks)
-            inputs = [img, L1, laplace_2, L2, laplace_4, L3, laplace_8, L1, laplace_2, L2, laplace_4, L3, laplace_8]
+            if use_wavelet_both:
+                # wavelet + laplace (2 stacks)
+                inputs = [img, L1, laplace_2, L2, laplace_4, L3, laplace_8, L1, laplace_2, L2, laplace_4, L3, laplace_8]
+            else:
+                inputs = [img, L1, laplace_2, L2, laplace_4, L3, laplace_8]  # wavelet + laplace (1 stack)
 
         yield inputs
 

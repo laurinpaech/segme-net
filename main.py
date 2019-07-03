@@ -52,19 +52,21 @@ print(args)
 
 # Set Parser Arguments
 if args.gpu != -1:
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
 nr_of_epochs = args.epochs
 ensemble = args.ensemble
+use_wavelet = args.wavelet
+use_wavelet_both = args.wavelet_both
 
 
 # load correct unet model
 if args.leakyRelu:
-    if args.wavelet:
-        if args.wavelet_both:
-            from model.stacked_unet_leaky_wavelet import *
-        else:
+    if use_wavelet:
+        if use_wavelet_both:
             from model.stacked_unet_leaky_wavelet_2 import *
+        else:
+            from model.stacked_unet_leaky_wavelet import *
     else:
         from model.stacked_unet_leaky import *
 else:
@@ -102,9 +104,9 @@ data_gen_args = dict(rotation_range=args.rotation,
                      channel_shift_range=args.channel_shift_range)
 
 trainGen = trainGenerator(args.batch_size, train_path, 'image', 'label', data_gen_args, save_to_dir=None,
-                          nr_of_stacks=args.nr_of_stacks, use_wavelet=args.wavelets)
+                          nr_of_stacks=args.nr_of_stacks, use_wavelet=use_wavelet, use_wavelet_both=use_wavelet_both)
 validGen = trainGenerator(1, valid_path, 'image', 'label', data_gen_args, save_to_dir=None,
-                          nr_of_stacks=args.nr_of_stacks, use_wavelet=args.wavelets)
+                          nr_of_stacks=args.nr_of_stacks, use_wavelet=use_wavelet, use_wavelet_both=use_wavelet_both)
 
 # Initialize model
 model = unet(nr_of_stacks=args.nr_of_stacks)
@@ -113,7 +115,7 @@ model = unet(nr_of_stacks=args.nr_of_stacks)
 model_checkpoint_train = ModelCheckpoint(os.path.join(log_path, 'unet_roadseg.hdf5'), monitor='kaggle_metric',
                                          verbose=1, save_best_only=True)
 
-model.fit_generator(trainGen, steps_per_epoch=50, epochs=nr_of_epochs, callbacks=[model_checkpoint_train, tensorboard],
+model.fit_generator(trainGen, steps_per_epoch=100, epochs=nr_of_epochs, callbacks=[model_checkpoint_train, tensorboard],
                     validation_data=validGen, validation_steps=valid_count)
 
 # if necessary, create tempfolders
@@ -127,10 +129,10 @@ if args.resize:
         test_count = test_count * 8
         prepare_ensemble(test_predict_path, temp_ensemble_path)
         filenames = os.listdir(temp_ensemble_path)
-        testGene = testGenerator(temp_ensemble_path, use_wavelet=args.wavelets)
+        testGene = testGenerator(temp_ensemble_path, use_wavelet=use_wavelet, use_wavelet_both=use_wavelet_both)
     else:
         filenames = os.listdir(test_predict_path)
-        testGene = testGenerator(test_predict_path, use_wavelet=args.wavelets)
+        testGene = testGenerator(test_predict_path, use_wavelet=use_wavelet, use_wavelet_both=use_wavelet_both)
 else:
     if ensemble:
         raise Exception("ENSEMBLE WITH 4TO1 CURRENTLY NOT SUPPORTED")
