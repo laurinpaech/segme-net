@@ -23,7 +23,7 @@ def unet(pretrained_weights=None, input_size=(None, None, 3), nr_of_stacks=1):
     conv1 = LeakyReLU(alpha=alpha)(conv1)
     pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
 
-    conv2 = Conv2D(128, 3, padding='same', kernel_initializer='he_normal')(pool1)
+    conv2 = Conv2D(128, 3, padding='same', kernel_initializer='he_normal', dilation_rate=2)(pool1)
     conv2 = LeakyReLU(alpha=alpha)(conv2)
     conv2 = Conv2D(128, 3, padding='same', kernel_initializer='he_normal')(conv2)
     conv2 = LeakyReLU(alpha=alpha)(conv2)
@@ -34,7 +34,7 @@ def unet(pretrained_weights=None, input_size=(None, None, 3), nr_of_stacks=1):
     merge2 = concatenate([conv2, L1, laplace_2], axis=3, name='concat_merge2')
     pool2 = MaxPooling2D(pool_size=(2, 2))(merge2)
 
-    conv3 = Conv2D(256, 3, padding='same', kernel_initializer='he_normal')(pool2)
+    conv3 = Conv2D(256, 3, padding='same', kernel_initializer='he_normal', dilation_rate=2)(pool2)
     conv3 = LeakyReLU(alpha=alpha)(conv3)
     conv3 = Conv2D(256, 3, padding='same', kernel_initializer='he_normal')(conv3)
     conv3 = LeakyReLU(alpha=alpha)(conv3)
@@ -44,7 +44,7 @@ def unet(pretrained_weights=None, input_size=(None, None, 3), nr_of_stacks=1):
     merge3 = concatenate([conv3, L2, laplace_4], axis=3)
     pool3 = MaxPooling2D(pool_size=(2, 2))(merge3)
 
-    conv4 = Conv2D(512, 3, padding='same', kernel_initializer='he_normal')(pool3)
+    conv4 = Conv2D(512, 3, padding='same', kernel_initializer='he_normal', dilation_rate=2)(pool3)
     conv4 = LeakyReLU(alpha=alpha)(conv4)
     conv4 = Conv2D(512, 3, padding='same', kernel_initializer='he_normal')(conv4)
     conv4 = LeakyReLU(alpha=alpha)(conv4)
@@ -55,13 +55,14 @@ def unet(pretrained_weights=None, input_size=(None, None, 3), nr_of_stacks=1):
     merge4 = concatenate([drop4, L3, laplace_8], axis=3)
     pool4 = MaxPooling2D(pool_size=(2, 2))(merge4)
 
-    # Bottom module
-    conv5 = Conv2D(1024, 3, padding='same', kernel_initializer='he_normal')(pool4)
+    # Bottom
+    conv5 = Conv2D(1024, 3, padding='same', kernel_initializer='he_normal', dilation_rate=2)(pool4)
     conv5 = LeakyReLU(alpha=alpha)(conv5)
     conv5 = Conv2D(1024, 3, padding='same', kernel_initializer='he_normal')(conv5)
     conv5 = LeakyReLU(alpha=alpha)(conv5)
     drop5 = Dropout(0.5)(conv5)
 
+    # Expansive path
     up6 = Conv2D(512, 2, padding='same', kernel_initializer='he_normal')(UpSampling2D(size=(2, 2))(drop5))
     up6 = LeakyReLU(alpha=alpha)(up6)
     merge6 = concatenate([drop4, up6], axis=3)
@@ -110,27 +111,26 @@ def unet(pretrained_weights=None, input_size=(None, None, 3), nr_of_stacks=1):
         conv1_2 = LeakyReLU(alpha=alpha)(conv1_2)
         pool1_2 = MaxPooling2D(pool_size=(2, 2))(conv1_2)
 
-        conv2_2 = Conv2D(128, 3, padding='same', kernel_initializer='he_normal')(pool1_2)
+        conv2_2 = Conv2D(128, 3, padding='same', kernel_initializer='he_normal', dilation_rate=2)(pool1_2)
         conv2_2 = LeakyReLU(alpha=alpha)(conv2_2)
         conv2_2 = Conv2D(128, 3, padding='same', kernel_initializer='he_normal')(conv2_2)
         conv2_2 = LeakyReLU(alpha=alpha)(conv2_2)
-
         pool2_2 = MaxPooling2D(pool_size=(2, 2))(conv2_2)
-        conv3_2 = Conv2D(256, 3, padding='same', kernel_initializer='he_normal')(pool2_2)
+
+        conv3_2 = Conv2D(256, 3, padding='same', kernel_initializer='he_normal', dilation_rate=2)(pool2_2)
         conv3_2 = LeakyReLU(alpha=alpha)(conv3_2)
         conv3_2 = Conv2D(256, 3, padding='same', kernel_initializer='he_normal')(conv3_2)
         conv3_2 = LeakyReLU(alpha=alpha)(conv3_2)
-
         pool3_2 = MaxPooling2D(pool_size=(2, 2))(conv3_2)
-        conv4_2 = Conv2D(512, 3, padding='same', kernel_initializer='he_normal')(pool3_2)
+
+        conv4_2 = Conv2D(512, 3, padding='same', kernel_initializer='he_normal', dilation_rate=2)(pool3_2)
         conv4_2 = LeakyReLU(alpha=alpha)(conv4_2)
         conv4_2 = Conv2D(512, 3, padding='same', kernel_initializer='he_normal')(conv4_2)
         conv4_2 = LeakyReLU(alpha=alpha)(conv4_2)
         drop4_2 = Dropout(0.5)(conv4_2)
-
         pool4_2 = MaxPooling2D(pool_size=(2, 2))(drop4_2)
 
-        conv5_2 = Conv2D(1024, 3, padding='same', kernel_initializer='he_normal')(pool4_2)
+        conv5_2 = Conv2D(1024, 3, padding='same', kernel_initializer='he_normal', dilation_rate=2)(pool4_2)
         conv5_2 = LeakyReLU(alpha=alpha)(conv5_2)
         conv5_2 = Conv2D(1024, 3, padding='same', kernel_initializer='he_normal')(conv5_2)
         conv5_2 = LeakyReLU(alpha=alpha)(conv5_2)
@@ -179,7 +179,7 @@ def unet(pretrained_weights=None, input_size=(None, None, 3), nr_of_stacks=1):
 
     # model.summary()
 
-    if (pretrained_weights):
+    if pretrained_weights:
         model.load_weights(pretrained_weights)
 
     return model
