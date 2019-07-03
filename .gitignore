@@ -1,3 +1,9 @@
 .idea
 __pycache__/
 .DS_Store
+*.ipynb
+.ipynb_checkpoints/
+logs/
+data/roadseg/temp_4to1_folder/
+data/roadseg/valid/output/
+data/roadseg/submit_output/
