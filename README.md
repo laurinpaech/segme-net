@@ -15,7 +15,7 @@ Road Segmentation Project for Computational Intelligence Lab 2019
 |   |
 |   |── train_600                   - training images + additional 600 generated images
 |   |
-|   └── train_10k                       - training images + additional 10000 generated images
+|   └── train_6000                       - training images + additional 6000 generated images
 │
 │
 ├── model                               - this folder contains any model of our project.
@@ -38,9 +38,17 @@ Road Segmentation Project for Computational Intelligence Lab 2019
 │ 
 └── utils
      |
+     ├── overlay_generator
+     |   |
+     |   ├── normal_img             - contains original images for that we want to generate overlays of predictions
+     |   |
+     |   ├── submit_img             - contains images that are used as overlay for normal_img
+     |   |
+     |   └── overlay_generator.py   - generates 
+     |
      ├── alpha_testing.py           - used for testing best cut-off value for our predictions
      |
-     ├── custom_losses.py
+     ├── custom_losses.py           - custom loss functions
      |
      ├── hough_transform.py
      |
@@ -53,7 +61,7 @@ Road Segmentation Project for Computational Intelligence Lab 2019
 
 ## Getting started
 
-Use python 3.6 and run the follwoing command:
+Use python 3.6 and run the following command:
 ```
 pip install -r requirements.txt
 ```
@@ -79,7 +87,7 @@ Notes:
 
     bsub -n 4 -W 4:00 -R "rusage[mem=2048, ngpus_excl_p=1]" python main_cil.py --desc "my_test_model" \
                      --epochs 300 --rotation 360 --width_shift_range 0.1 --height_shift_range 0.1 \
-                     --shear_range 0.1 --zoom_range 0.1 --horizontal_flip=True --fill_mode "reflect" \
+                     --shear_range 0 --zoom_range 0 --horizontal_flip=True --fill_mode "reflect" \
                      --resize=True --submission=False
 
 check progress with (note, after each epoch, also calculates valid-loss)
@@ -100,7 +108,14 @@ log folder contains tensorboard files, download to own machine and look at with
 
 #### Reproducing Kaggle results
 
-TODO
+TODO EPOCHS
+
+run the following command:
+
+```
+python main.py --desc "stacked_unet_2stack" --epochs 1000 --rotation 360 --width_shift_range 0 --height_shift_range 0 --shear_range 0 \
+--zoom_range 0 --horizontal_flip --fill_mode "reflect" --nr_of_stacks 2 --resize --ensemble --gpu=0
+```
 
 ## Results
 

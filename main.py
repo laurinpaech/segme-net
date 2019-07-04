@@ -86,7 +86,7 @@ tensorboard = TensorBoard(log_dir=log_path, histogram_freq=0,
 
 
 # set paths
-train_path = "data/train"
+train_path = "data/train"  # Change this according to the training data you want to use
 test_predict_path = "data/test"
 test_output_path = "data/submit_output"
 valid_path = "data/valid"
