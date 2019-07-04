@@ -13,6 +13,8 @@ Overlay generator:
 - Make sure that predictions are inside submit_img/ directory
 - Set the settable parameters image_nr and img_nr_overlay to the name of the original image and predictions used  and run
 
+- If image has only values 0 and 1 we set the flag cutoff_overlay (removes background and applies red map)
+
 As an example we use 123.png as the original image in normal_img
 In submit_img we have 2 different overlays, 123.png and 123_1_0.png, with and without overlay respectively.
 """
@@ -26,8 +28,9 @@ submission_img_path = os.path.join(base_dir_path, "submit_img/")
 #########################
 # Add images and change these paths and run this skript
 image_nr = '123'  # original image
-image_nr_overlay = '123_1_0'  # Example without cutoff
+image_nr_overlay = '123'  # Example without cutoff
 alpha = 0.55
+cutoff_overlay = True
 
 ## Images path
 img_path = os.path.join(normal_img_path, image_nr + ".png")
@@ -46,7 +49,7 @@ normal_img = np.array(normal_img)
 overlay_img = np.array(overlay_img)
 
 ## Remove background
-# overlay_img2 = ma.masked_array(overlay_img, overlay_img <= 0.1)
+overlay_img2 = ma.masked_array(overlay_img, overlay_img <= 0.99)
 # overlay_img = 1 - overlay_img
 # overlay_img2 = ma.masked_array(overlay_img, overlay_img >= 0.8)
 
@@ -80,7 +83,11 @@ fig, ax = plt.subplots(figsize=(6, 6))
 plt.axis('off')
 plt.grid(None)
 plt.imshow(normal_img)
-plt.imshow(overlay_img, cmap=custom_cmp, alpha=alpha)
+
+if cutoff_overlay:
+        plt.imshow(overlay_img2, cmap=custom_cmp, alpha=alpha)
+else:
+        plt.imshow(overlay_img, cmap=custom_cmp, alpha=alpha)
 # colorbar.ColorbarBase(ax = ax, cmap=custom_cmp, orientation='horizontal')
 # plt.imshow(overlay_img2, alpha=alpha, cmap=cmap)
 plt.show()
