@@ -32,7 +32,7 @@ parser.add_argument('--resize', default=False, action='store_true',
                     help='either resizes submission images or uses splits image into 4 subimages to make predictions')
 parser.add_argument('--combine_max', default=False, action='store_true',
                     help='if split image into 4 subimage, combine using max (True), or using average (False, default)')
-parser.add_argument('--nr_of_stacks', type=int, default=2,
+parser.add_argument('--nr_of_stacks', type=int, default=1,
                     help='points outside the boundaries of the input are filled according to the given mode, '
                          'standard is nearest')
 parser.add_argument('--ensemble', default=False, action='store_true',
@@ -126,7 +126,7 @@ else:
 model_checkpoint_train = ModelCheckpoint(os.path.join(log_path, 'unet_roadseg.hdf5'), monitor='kaggle_metric',
                                          verbose=1, save_best_only=True)
 
-model.fit_generator(trainGen, steps_per_epoch=100, epochs=nr_of_epochs, callbacks=[model_checkpoint_train, tensorboard],
+model.fit_generator(trainGen, steps_per_epoch=50, epochs=nr_of_epochs, callbacks=[model_checkpoint_train, tensorboard],
                     validation_data=validGen, validation_steps=valid_count)
 
 # if necessary, create tempfolders
