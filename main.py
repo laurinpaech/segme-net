@@ -1,11 +1,14 @@
 from data_loader.data import *
 from keras.callbacks import TensorBoard, ModelCheckpoint
 import argparse
+from model.segnet import SegNet
 
 # this part is used for argument handling
 parser = argparse.ArgumentParser()
 parser.add_argument('--desc', type=str, default='stacked_unet_default_desc',
                     help='How to name this run, defines folder in logs dir, only use "a-z,A-Z,1-9,_" pls')
+parser.add_argument('--model', type=str, default='unet',
+                    help='Specify if you want to run unet or segnet')
 parser.add_argument('--epochs', type=int, default=300,
                     help='Number of epochs to run')
 parser.add_argument('--rotation', type=int, default=360,
@@ -53,6 +56,9 @@ print(args)
 # Set Parser Arguments
 if args.gpu != -1:
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
+
+# For cpu use:
+# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 nr_of_epochs = args.epochs
 ensemble = args.ensemble
@@ -109,7 +115,12 @@ validGen = trainGenerator(1, valid_path, 'image', 'label', data_gen_args, save_t
                           nr_of_stacks=args.nr_of_stacks, use_wavelet=use_wavelet, use_wavelet_both=use_wavelet_both)
 
 # Initialize model
-model = unet(nr_of_stacks=args.nr_of_stacks)
+if args.model == 'unet':
+    model = unet(nr_of_stacks=args.nr_of_stacks)
+elif args.model == 'segnet':
+    model = SegNet()
+else:
+    raise Exception('Model not correctly specified. Try unet or segnet.')
 
 
 model_checkpoint_train = ModelCheckpoint(os.path.join(log_path, 'unet_roadseg.hdf5'), monitor='kaggle_metric',

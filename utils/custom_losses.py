@@ -3,6 +3,7 @@ from keras.optimizers import *
 
 
 def grid_loss(y_true, y_pred):
+
     # differentiable
     myfilter = tf.ones([16, 16, tf.shape(y_true)[3], 1])
     y_true_reduced = tf.nn.conv2d(input=y_true, filter=myfilter, padding="VALID", strides=[1, 16, 16, 1])
