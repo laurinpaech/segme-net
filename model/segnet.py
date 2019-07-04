@@ -3,7 +3,7 @@ from utils.custom_losses import *
 
 
 def SegNet(pretrained_weights=None, input_shape=(400, 400, 3), classes=1):
-    # c.f. https://github.com/alexgkendall/SegNet-Tutorial/blob/master/Example_Models/bayesian_segnet_camvid.prototxt
+    # c.f. https://github.com/namakemono/keras-segnet/blob/master/segnet.py
     img_input = Input(shape=input_shape)
     x = img_input
 
@@ -47,8 +47,7 @@ def SegNet(pretrained_weights=None, input_shape=(400, 400, 3), classes=1):
     x = BatchNormalization()(x)
     x = Activation("relu")(x)
 
-    x = Convolution2D(classes, 1, 1, border_mode="valid")(x)
-    # x = Activation("softmax")(x)
+    x = Convolution2D(classes, 1, 1, activation='sigmoid', border_mode="valid")(x)
 
     model = Model(input=img_input, output=x)
 
