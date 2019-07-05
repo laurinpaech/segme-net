@@ -11,6 +11,7 @@ parser.add_argument('--model', type=str, default='unet',
                     help='Specify if you want to run unet or segnet')
 parser.add_argument('--epochs', type=int, default=300,
                     help='Number of epochs to run')
+
 parser.add_argument('--rotation', type=int, default=360,
                     help='rotation perturbation in degrees')
 parser.add_argument('--width_shift_range', type=float, default=50,
@@ -41,6 +42,8 @@ parser.add_argument('--channel_shift_range', type=float, default=0,
                     help='random channel_shift_range in [-input,input]')
 parser.add_argument('--batch_size', type=int, default=2,
                     help='Batch size for training (default: 2) ')
+parser.add_argument('--dilation_off', default=False, action='store_true',
+                    help='choose if unet should run without dilations, only available without leaky and wavelets!')
 parser.add_argument('--leakyRelu', default=False, action='store_true',
                     help='choose if unet should use leaky Relu')
 parser.add_argument('--wavelet', default=False, action='store_true',
@@ -76,7 +79,11 @@ if args.leakyRelu:
     else:
         from model.stacked_unet_leaky import *
 else:
-    from model.stacked_unet import *
+    if args.dilation_off:
+        from model.stacked_unet_wo_dilation import *
+    else:
+        from model.stacked_unet import *
+
 
 
 # set logging

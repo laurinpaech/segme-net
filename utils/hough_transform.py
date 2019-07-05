@@ -4,7 +4,18 @@ import matplotlib.pyplot as plt
 import os
 import skimage.io as io
 
-# If you want to run it on Colab first run this:
+"""
+Post processing step:
+
+Takes predicted images and applies probabilistic hough transform 
+to detect lines to fill blank spots in streets. 
+
+This scripts shows side by side predicted images + augemented image (with lines) + satellite image.
+
+TODO: This script should be used to find good parameters for hough transform.
+"""
+
+# If you want to run it on Google Colab first run this:
 """
 import os
 import shutil
