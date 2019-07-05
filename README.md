@@ -56,7 +56,7 @@ Road Segmentation Project for Computational Intelligence Lab 2019
      |
      ├── custom_layers.py           - custom layers for segnet
      |
-     ├── hough_transform.py         - TODO
+     ├── hough_transform.py         - Probabilistic Hough Transform to fill gaps in results
      |
      ├── mask_to_submission.py
      |
@@ -93,8 +93,8 @@ Notes:
 
     bsub -n 4 -W 4:00 -R "rusage[mem=2048, ngpus_excl_p=1]" python main_cil.py --desc "my_test_model" \
                      --epochs 300 --rotation 360 --width_shift_range 0.1 --height_shift_range 0.1 \
-                     --shear_range 0 --zoom_range 0 --horizontal_flip=True --fill_mode "reflect" \
-                     --resize=True --submission=False
+                     --shear_range 0 --zoom_range 0 --horizontal_flip --fill_mode "reflect" \
+                     --resize
 
 check progress with (note, after each epoch, also calculates valid-loss)
 
@@ -106,23 +106,18 @@ log folder contains tensorboard files, download to own machine and look at with
     tensorboard --logdir ./logs
 
 #### How to create submission
-1. set submission_flag to True in main_cil.py
-2. do step 1 and 2 from above, but add flag "--submission_flag True"
-3. predictions in data/roadseg/submit_output/
-4. copy mask_to_submission.py to output folder, switch to folder and run
-5. next_submission.csv in folder can now be uploaded to kaggle
+1. run the model
+2. predictions are in data/submit_output/
+3. run mask_to_submission.py on output folder
+4. next_submission.csv in folder can now be uploaded to kaggle
 
 #### Reproducing Kaggle results
-
-TODO EPOCHS
 
 run the following command:
 
 ```
 python main.py --desc "stacked_unet_2stack" --epochs 1000 --rotation 360 --width_shift_range 0 --height_shift_range 0 --shear_range 0 \
---zoom_range 0 --horizontal_flip --fill_mode "reflect" --nr_of_stacks 2 --resize --ensemble --gpu=0
+--zoom_range 0 --horizontal_flip --fill_mode "reflect" --nr_of_stacks 2 --resize --ensemble
 ```
 
-## Results
-
-TODO
+This runs the Stacked U-Net on the 100 training images and saves the result in `data/submit_output/stacked_unet_2stack/`.

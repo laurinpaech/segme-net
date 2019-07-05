@@ -12,7 +12,8 @@ parser.add_argument('--model', type=str, default='unet',
                     help='Specify if you want to run unet or segnet')
 parser.add_argument('--epochs', type=int, default=300,
                     help='Number of epochs to run')
-
+parser.add_argument('--data', type=str, default='train',
+                    help='Choose which training set you want to use: train, train_600')
 parser.add_argument('--rotation', type=int, default=360,
                     help='rotation perturbation in degrees')
 parser.add_argument('--width_shift_range', type=float, default=50,
@@ -92,7 +93,13 @@ tensorboard = TensorBoard(log_dir=log_path, histogram_freq=0,
 
 
 # set paths
-train_path = "data/train"  # Change this according to the training data you want to use
+if args.data == 'train':
+    train_path = "data/train"
+elif args.data == 'train_600':
+    train_path = "data/train_600"
+else:
+    raise Exception('Dataset not correctly specified. Try train or train_600.')
+
 test_predict_path = "data/test"
 test_output_path = "data/submit_output"
 valid_path = "data/valid"

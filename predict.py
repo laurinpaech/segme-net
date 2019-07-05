@@ -30,7 +30,7 @@ print(args)
 
 # Set Parser Arguments
 if args.gpu != -1:
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
 ensemble = args.ensemble
 use_wavelet = args.wavelet
