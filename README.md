@@ -82,7 +82,7 @@ The architecture was inspired by [U-Net: Convolutional Networks for Biomedical I
 
 1. first load env on leonhard
     
-    `module load gcc/4.8.5 python_gpu/3.6.4 hdf5 eth_proxy`
+    `module load gcc/4.8.5 python_gpu/3.6.4 hdf5 eth_proxy` \
     `module load cudnn/7.0`
 
 2.. then run (estimated runtime 8 hours on a "GeForce GTX 1080 Ti")
