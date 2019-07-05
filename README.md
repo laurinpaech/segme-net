@@ -1,6 +1,11 @@
 # segme-net
 Road Segmentation Project for Computational Intelligence Lab 2019
 
+Our github link: https://github.com/laurinpaech/segme-net
+
+ATTENTION!!!
+We had to delete train_600 (the 600 additional training images).
+If you want to have the additional data, please download it from the github repo and insert it according to the folder structure in directory data.
 
 ## Folder structure
 
@@ -13,9 +18,7 @@ Road Segmentation Project for Computational Intelligence Lab 2019
 |   |   
 │   |── test                        - all test images given for the project
 |   |
-|   |── train_600                   - training images + additional 600 generated images
-|   |
-|   └── train_6000                       - training images + additional 6000 generated images
+|   └── train_600                   - training images + additional 600 generated images
 │
 │
 ├── model                               - this folder contains any model of our project.
