@@ -92,7 +92,7 @@ The architecture was inspired by [U-Net: Convolutional Networks for Biomedical I
 3. result will be located in data/roadseg/submit_output/reproducing_best_result
 
 #### How to create submission
-1. run the model
+1. run the model with `python main.py` with appropriate flags
 2. predictions are in data/submit_output/
 3. run mask_to_submission.py on output folder
 4. next_submission.csv in folder can now be uploaded to kaggle
