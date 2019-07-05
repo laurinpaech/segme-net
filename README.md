@@ -20,6 +20,10 @@ Road Segmentation Project for Computational Intelligence Lab 2019
 │
 ├── model                               - this folder contains any model of our project.
 |   |
+|   |── encoder_decoder.py                  - keras implementation of simple encoder decoder
+|   |
+|   |── segnet.py                           - keras implementation of SegNet
+|   |
 |   |── stacked_unet.py                     - keras implementation of stacked unet
 |   |
 |   |── stacked_unet_leaky.py               - keras implementation of stacked unet + leaky relu
@@ -50,7 +54,9 @@ Road Segmentation Project for Computational Intelligence Lab 2019
      |
      ├── custom_losses.py           - custom loss functions
      |
-     ├── hough_transform.py
+     ├── custom_layers.py           - custom layers for segnet
+     |
+     ├── hough_transform.py         - TODO
      |
      ├── mask_to_submission.py
      |

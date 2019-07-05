@@ -1,7 +1,8 @@
 from data_loader.data import *
 from keras.callbacks import TensorBoard, ModelCheckpoint
 import argparse
-from model.segnet import SegNet
+from model.encoder_decoder import encoder_decoder
+from model.segnet import segnet
 
 # this part is used for argument handling
 parser = argparse.ArgumentParser()
@@ -11,6 +12,7 @@ parser.add_argument('--model', type=str, default='unet',
                     help='Specify if you want to run unet or segnet')
 parser.add_argument('--epochs', type=int, default=300,
                     help='Number of epochs to run')
+
 parser.add_argument('--rotation', type=int, default=360,
                     help='rotation perturbation in degrees')
 parser.add_argument('--width_shift_range', type=float, default=50,
@@ -41,6 +43,8 @@ parser.add_argument('--channel_shift_range', type=float, default=0,
                     help='random channel_shift_range in [-input,input]')
 parser.add_argument('--batch_size', type=int, default=2,
                     help='Batch size for training (default: 2) ')
+parser.add_argument('--dilation_off', default=False, action='store_true',
+                    help='choose if unet should run without dilations, only available without leaky and wavelets!')
 parser.add_argument('--leakyRelu', default=False, action='store_true',
                     help='choose if unet should use leaky Relu')
 parser.add_argument('--wavelet', default=False, action='store_true',
@@ -76,8 +80,10 @@ if args.leakyRelu:
     else:
         from model.stacked_unet_leaky import *
 else:
-    from model.stacked_unet import *
-
+    if args.dilation_off:
+        from model.stacked_unet_wo_dilation import *
+    else:
+        from model.stacked_unet import *
 
 # set logging
 log_path = os.path.join("./logs/", args.desc)
@@ -117,8 +123,10 @@ validGen = trainGenerator(1, valid_path, 'image', 'label', data_gen_args, save_t
 # Initialize model
 if args.model == 'unet':
     model = unet(nr_of_stacks=args.nr_of_stacks)
+elif args.model == 'encoder_decoder':
+    model = encoder_decoder()
 elif args.model == 'segnet':
-    model = SegNet()
+    model = segnet()
 else:
     raise Exception('Model not correctly specified. Try unet or segnet.')
 
