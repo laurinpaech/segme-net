@@ -1,11 +1,19 @@
 # segme-net
 Road Segmentation Project for Computational Intelligence Lab 2019
 
-Our github link: https://github.com/laurinpaech/segme-net
+Group: Seggy Roady Projecty
+
+Martin Blapp, Laurin Paech, Nihat Isik, Qais El Okaili
+
+Department of Computer Science, ETH Zürich, Switzerland
+
+
+github link: https://github.com/laurinpaech/segme-net
 
 ATTENTION!!!
 We had to delete train_600 (the 600 additional training images).
 If you want to have the additional data, please download it from the github repo and insert it according to the folder structure in directory data.
+
 
 ## Folder structure
 
