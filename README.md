@@ -107,3 +107,6 @@ python main.py --desc "stacked_unet_2stack" --epochs 1000 --rotation 360 --width
 ```
 
 This runs the Stacked U-Net on the 100 training images and saves the result in `data/submit_output/stacked_unet_2stack/`.
+
+
+NOTE: if the accuracy doesn't increase within the first 30 epochs, run again.
