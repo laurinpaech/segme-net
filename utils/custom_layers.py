@@ -1,5 +1,10 @@
-from keras import backend as K
-from keras.layers import Layer
+from keras.engine.topology import Layer
+import keras.backend as K
+
+# based on
+# https://github.com/yinanzhu12/SegNet-keras
+# and
+# https://github.com/ykamikawa/tf-keras-SegNet
 
 
 class MaxPoolingWithArgmax2D(Layer):
@@ -48,7 +53,7 @@ class MaxPoolingWithArgmax2D(Layer):
         return 2 * [None]
 
 
-class MaxUnpooling2D(Layer):
+class MaxUnpooling2D_old(Layer):
     def __init__(self, size=(2, 2), **kwargs):
         super(MaxUnpooling2D, self).__init__(**kwargs)
         self.size = size
@@ -98,3 +103,28 @@ class MaxUnpooling2D(Layer):
                 mask_shape[2]*self.size[1],
                 mask_shape[3]
                 )
+
+
+class MaxUnpooling2D(Layer):
+    def __init__(self, **kwargs):
+        super(MaxUnpooling2D, self).__init__(**kwargs)
+        return
+
+    def call(self, x):
+        argmax = K.cast(K.flatten(x[1]), 'int32')
+        max_value = K.flatten(x[0])
+        with K.tf.variable_scope(self.name):
+            input_shape=K.shape(x[0])
+            batch_size=input_shape[0]
+            image_size=input_shape[1]*input_shape[2]*input_shape[3]
+            output_shape=[input_shape[0],input_shape[1]*2,input_shape[2]*2,input_shape[3]]
+            indices_0=K.flatten(K.tf.matmul(K.reshape(K.tf.range(batch_size),(batch_size,1)),K.ones((1,image_size),dtype='int32')))
+            indices_1 = argmax%(image_size*4)//(output_shape[2]*output_shape[3])
+            indices_2 = argmax%(output_shape[2]*output_shape[3])//output_shape[3]
+            indices_3 = argmax%output_shape[3]
+            indices = K.tf.stack([indices_0,indices_1,indices_2,indices_3])
+            output=K.tf.scatter_nd(K.transpose(indices),max_value,output_shape)
+            return output
+
+    def compute_output_shape(self, input_shape):
+        return input_shape[0][0],input_shape[0][1]*2,input_shape[0][2]*2,input_shape[0][3]

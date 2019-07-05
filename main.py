@@ -1,7 +1,8 @@
 from data_loader.data import *
 from keras.callbacks import TensorBoard, ModelCheckpoint
 import argparse
-from model.segnet import SegNet
+from model.encoder_decoder import encoder_decoder
+from model.segnet import segnet
 
 # this part is used for argument handling
 parser = argparse.ArgumentParser()
@@ -84,8 +85,6 @@ else:
     else:
         from model.stacked_unet import *
 
-
-
 # set logging
 log_path = os.path.join("./logs/", args.desc)
 tensorboard = TensorBoard(log_dir=log_path, histogram_freq=0,
@@ -124,8 +123,10 @@ validGen = trainGenerator(1, valid_path, 'image', 'label', data_gen_args, save_t
 # Initialize model
 if args.model == 'unet':
     model = unet(nr_of_stacks=args.nr_of_stacks)
+elif args.model == 'encoder_decoder':
+    model = encoder_decoder()
 elif args.model == 'segnet':
-    model = SegNet()
+    model = segnet()
 else:
     raise Exception('Model not correctly specified. Try unet or segnet.')
 

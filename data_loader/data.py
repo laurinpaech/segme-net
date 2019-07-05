@@ -22,6 +22,7 @@ def wavelets(imgs):
 
     for i, img in enumerate(imgs):  # imgs: (batch_size, *target_size, channels)`
         grey = np.dot(img[..., :3], [0.299, 0.587, 0.114])
+
         # Wavelet decomposition
         _, L3, L2, L1 = pywt.wavedec2(grey, 'db1', level=3)  # shape: (25, 25), (50, 50), (100, 100), (200, 200)
         L1s.append(np.array(L1))
