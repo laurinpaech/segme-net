@@ -1,6 +1,7 @@
 # segme-net
 Road Segmentation Project for Computational Intelligence Lab 2019
-
+Martin Blapp, Laurin Paech, Nihat Isik, Qais El Okaili
+Department of Computer Science, ETH Zürich, Switzerland
 
 ## Folder structure
 
