@@ -4,5 +4,5 @@ PyWavelets==1.0.3
 Keras==2.2.4
 numpy==1.16.2
 opencv_python==4.1.0.25
-Pillow==6.1.0
+Pillow==6.2.0
 pywt==1.0.6
